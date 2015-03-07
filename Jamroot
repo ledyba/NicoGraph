@@ -1,0 +1,37 @@
+import os ;
+
+BOOST_INCLUDE = [ os.environ BOOST_INCLUDE ] ;
+
+lib pthread : : <name>pthread ;
+lib folly : : <name>folly ;
+lib glog : : <name>glog ;
+lib gflags : : <name>gflags ;
+lib proxygenhttpserver : : <name>proxygenhttpserver ;
+lib mysqlclient : : <name>mysqlclient ;
+
+project
+    : build-dir bin
+    : requirements
+        <library>pthread
+        <library>folly
+        <library>glog
+        <library>gflags
+        <library>proxygenhttpserver
+        <library>mysqlclient
+        <toolset>gcc:<cxxflags>-std=gnu++11
+    ;
+
+exe nicopp
+    :
+    src/main.cpp
+    src/graph/graph.cpp
+    src/graph/loader.cpp
+    pthread
+    folly
+    glog
+    gflags
+    proxygenhttpserver
+    mysqlclient
+    :
+    <link>shared
+    ;
