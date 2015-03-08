@@ -31,6 +31,11 @@ private:
 public:
 	GraphLoader(MYSQL_STMT* stmt);
 	~GraphLoader() noexcept;
+	GraphLoader(GraphLoader const&) = delete;
+	GraphLoader(GraphLoader&&) = delete;
+	GraphLoader& operator= (GraphLoader&&) = delete;
+	GraphLoader& operator= (GraphLoader const&) = delete;
+public:
 	void loadGraph(MYSQL_TIME const& from, MYSQL_TIME const& to, int const limit);
 };
 
@@ -69,6 +74,10 @@ private:
 public:
 	LoaderPool();
 	~LoaderPool() noexcept = default;
+	LoaderPool(LoaderPool const&) = delete;
+	LoaderPool(LoaderPool&&) = delete;
+	LoaderPool& operator= (LoaderPool&&) = delete;
+	LoaderPool& operator= (LoaderPool const&) = delete;
 public:
 
 };

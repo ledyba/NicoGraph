@@ -52,17 +52,15 @@ GraphLoader::GraphLoader(MYSQL_STMT* stmt__)
 	this->outBind_[0].buffer_length = this->videoId_.size();
 	this->outBind_[0].buffer_type = MYSQL_TYPE_VAR_STRING;
 	this->outBind_[0].length = &this->videoIdLength_;
-	this->outBind_[0].length_value = 0;
+
 	this->outBind_[1].buffer = &this->viewCount_;
 	this->outBind_[1].buffer_length = sizeof(this->viewCount_);
 	this->outBind_[1].buffer_type = MYSQL_TYPE_LONG;
-	this->outBind_[1].length = 0;
-	this->outBind_[1].length_value = 0;
+
 	this->outBind_[2].buffer = this->tags_.data();
 	this->outBind_[2].buffer_length = this->tags_.size();
 	this->outBind_[2].buffer_type = MYSQL_TYPE_VAR_STRING;
 	this->outBind_[2].length = &this->tagsLength_;
-	this->outBind_[2].length_value = 0;
 	if(mysql_stmt_bind_result(this->stmt_, this->outBind_)){
 		throw std::runtime_error(sprintf("Failed to bind result: %s",mysql_stmt_error(this->stmt_)));
 	}
@@ -100,11 +98,11 @@ void GraphLoader::loadGraph(MYSQL_TIME const& from, MYSQL_TIME const& to, int co
 }
 
 LoaderPool::LoaderPool()
-:mysql_(nullptr){
-	this->mysql_ = mysql_init(this->mysql_);
+{
+	this->mysql_ = mysql_init(nullptr);
 	mysql_options(this->mysql_, MYSQL_SET_CHARSET_NAME, "utf8");
 	//mysql_options(this->mysql_, MYSQL_OPT_COMPRESS, 0);
-	LOG(INFO) << "MySQL init." << std::flush;
+	LOG(INFO) << "Loader Pool initialized: " << this->mysql_ << std::flush;
 	if(!mysql_real_connect(mysql_, MYSQL_HOST, MYSQL_USER, MYSQL_PASSWORD, MYSQL_DB, MYSQL_PORT, nullptr, 0)){
 		throw std::runtime_error(sprintf("Failed to init MYSQL: %s",mysql_error(this->mysql_)));
 	}
@@ -127,6 +125,6 @@ std::unique_ptr<GraphLoader> LoaderPool::get(){
 		throw std::runtime_error(sprintf("Failed to init statement: %s",mysql_error(this->mysql_)));
 	}
 	return std::move(std::unique_ptr<GraphLoader>(new GraphLoader(stmt)));
-
 }
+
 }
