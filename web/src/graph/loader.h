@@ -41,9 +41,10 @@ public:
 
 class LoaderPool final {
 public:
+	template <typename Resource>
 	class Session final{
 		LoaderPool& pool_;
-		std::unique_ptr<GraphLoader> loader_;
+		std::unique_ptr<Resource> loader_;
 	public:
 		Session() = delete;
 		Session(Session const&) = delete;
@@ -55,16 +56,17 @@ public:
 		,loader_(std::move(pool.get()))
 		{
 		}
-		GraphLoader* operator->() {
+		Resource* operator->() {
 			return this->loader_.get();
 		}
-		GraphLoader const* operator->() const {
+		Resource const* operator->() const {
 			return this->loader_.get();
 		}
 		~Session() noexcept{
 			pool_.back(std::move(loader_));
 		}
 	};
+	typedef Session<GraphLoader> GraphSession;
 private:
 	MYSQL* mysql_;
 	std::mutex mutex_;

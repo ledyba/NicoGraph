@@ -49,7 +49,7 @@ class EchoHandlerFactory : public RequestHandlerFactory {
 
 int main(int argc, char* argv[]) {
   nicopp::LoaderPool pool;
-  nicopp::LoaderPool::Session loader(pool);
+  nicopp::LoaderPool::GraphSession loader(pool);
   MYSQL_TIME from;
   from.year = 2011;
   from.month = 0;
