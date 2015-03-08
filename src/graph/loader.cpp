@@ -22,34 +22,111 @@
 
 namespace nicopp {
 
-GraphLoader::GraphLoader():mysql_(nullptr){
-	this->mysql_ = mysql_init(this->mysql_);
-	LOG(INFO) << "MySQL init." << std::flush;
-	if(!mysql_real_connect(mysql_, MYSQL_HOST, MYSQL_USER, MYSQL_PASSWORD, MYSQL_DB, MYSQL_PORT, nullptr, 0)){
-		throw std::runtime_error(mysql_error(this->mysql_));
+GraphLoader::GraphLoader(MYSQL_STMT* stmt__)
+:stmt_(stmt__)
+,limit_(0)
+,videoId_(30,0)
+,videoIdLength_(0)
+,viewCount_(0)
+,tags_(1024,0)
+,tagsLength_(0)
+{
+	std::string const stmt = "SELECT video_id,view_count,tags FROM videos WHERE uploaded_at BETWEEN ? AND ? limit ?";
+	if(mysql_stmt_prepare(this->stmt_, stmt.data(), stmt.size())){
+		throw std::runtime_error(sprintf("Failed to prepare statement: %s",mysql_stmt_error(this->stmt_)));
+	}
+	memset(this->inBind_, 0, sizeof(this->inBind_));
+	this->inBind_[0].buffer = &this->from_;
+	this->inBind_[0].buffer_length = sizeof(this->from_);
+	this->inBind_[0].buffer_type = MYSQL_TYPE_DATETIME;
+	this->inBind_[1].buffer = &this->to_;
+	this->inBind_[1].buffer_length = sizeof(this->to_);
+	this->inBind_[1].buffer_type = MYSQL_TYPE_DATETIME;
+	this->inBind_[2].buffer = &this->limit_;
+	this->inBind_[2].buffer_type = MYSQL_TYPE_LONG;
+	if(mysql_stmt_bind_param(this->stmt_, this->inBind_)){
+		throw std::runtime_error(sprintf("Failed to bind param: %s",mysql_stmt_error(this->stmt_)));
+	}
+	memset(this->outBind_, 0, sizeof(this->outBind_));
+	this->outBind_[0].buffer = this->videoId_.data();
+	this->outBind_[0].buffer_length = this->videoId_.size();
+	this->outBind_[0].buffer_type = MYSQL_TYPE_VAR_STRING;
+	this->outBind_[0].length = &this->videoIdLength_;
+	this->outBind_[0].length_value = 0;
+	this->outBind_[1].buffer = &this->viewCount_;
+	this->outBind_[1].buffer_length = sizeof(this->viewCount_);
+	this->outBind_[1].buffer_type = MYSQL_TYPE_LONG;
+	this->outBind_[1].length = 0;
+	this->outBind_[1].length_value = 0;
+	this->outBind_[2].buffer = this->tags_.data();
+	this->outBind_[2].buffer_length = this->tags_.size();
+	this->outBind_[2].buffer_type = MYSQL_TYPE_VAR_STRING;
+	this->outBind_[2].length = &this->tagsLength_;
+	this->outBind_[2].length_value = 0;
+	if(mysql_stmt_bind_result(this->stmt_, this->outBind_)){
+		throw std::runtime_error(sprintf("Failed to bind result: %s",mysql_stmt_error(this->stmt_)));
 	}
 }
 GraphLoader::~GraphLoader() noexcept {
-	mysql_close(this->mysql_);
+	mysql_stmt_close(this->stmt_);
 }
 
-void GraphLoader::loadGraph(std::string const& from,std::string const& to, int const limit) {
-	std::string const q (sprintf("SELECT video_id,view_count,tags FROM videos WHERE uploaded_at BETWEEN '%s' AND '%s' limit %d;",from,to,limit));
-	int const r = mysql_query(this->mysql_, q.c_str());
+
+void GraphLoader::loadGraph(MYSQL_TIME const& from, MYSQL_TIME const& to, int const limit)
+{
+	this->limit_=limit;
+	this->from_ = from;
+	this->to_ = to;
+	int r = mysql_stmt_execute(this->stmt_);
 	if (r != 0){
-		throw std::runtime_error(sprintf("Error:%d: %s", r, mysql_error(this->mysql_)));
+		throw std::runtime_error(sprintf("Error (code %d): %s", r, mysql_stmt_error(this->stmt_)));
 	}
-	MYSQL_RES *res = mysql_use_result(this->mysql_);
-	if (!res){
-		throw std::runtime_error(sprintf("Error: %s", mysql_error(this->mysql_)));
-	}
-	MYSQL_ROW row;
 	int c = 0;
-	while((row = mysql_fetch_row(res))){
+	while((r = mysql_stmt_fetch(this->stmt_)) == 0){
 		c++;
-		//LOG(INFO) << row[0];
+		//LOG(INFO) << this->videoId_.data() << ":" << this->viewCount_ << "<タグ>" << this->tags_.data();
 	}
-	mysql_free_result(res);
+	if(r == MYSQL_NO_DATA) {
+	}else if(r == MYSQL_DATA_TRUNCATED) {
+		for(unsigned int i=0;i<sizeof(this->outBind_)/sizeof(this->outBind_[0]);i++){
+			if(this->outBind_[i].error_value){
+				throw std::runtime_error(sprintf("Truncated: code: %d, index: %d", this->outBind_[i].error, i));
+			}
+		}
+	}else{
+		throw std::runtime_error(sprintf("Error (code %d): %s", r, mysql_stmt_error(this->stmt_)));
+	}
+	LOG(INFO) << c << " videos";
 }
 
+LoaderPool::LoaderPool()
+:mysql_(nullptr){
+	this->mysql_ = mysql_init(this->mysql_);
+	mysql_options(this->mysql_, MYSQL_SET_CHARSET_NAME, "utf8");
+	//mysql_options(this->mysql_, MYSQL_OPT_COMPRESS, 0);
+	LOG(INFO) << "MySQL init." << std::flush;
+	if(!mysql_real_connect(mysql_, MYSQL_HOST, MYSQL_USER, MYSQL_PASSWORD, MYSQL_DB, MYSQL_PORT, nullptr, 0)){
+		throw std::runtime_error(sprintf("Failed to init MYSQL: %s",mysql_error(this->mysql_)));
+	}
+}
+void LoaderPool::back(std::unique_ptr<GraphLoader>&& loader){
+	std::lock_guard<std::mutex> lk(this->mutex_);
+	this->connections_.emplace_back(std::move(loader));
+}
+std::unique_ptr<GraphLoader> LoaderPool::get(){
+	{
+		std::lock_guard<std::mutex> lk(this->mutex_);
+		if(!this->connections_.empty()){
+			std::unique_ptr<GraphLoader> r(std::move(this->connections_.back()));
+			this->connections_.pop_back();
+			return std::move(r);
+		}
+	}
+	MYSQL_STMT* stmt = mysql_stmt_init(this->mysql_);
+	if(!stmt){
+		throw std::runtime_error(sprintf("Failed to init statement: %s",mysql_error(this->mysql_)));
+	}
+	return std::move(std::unique_ptr<GraphLoader>(new GraphLoader(stmt)));
+
+}
 }

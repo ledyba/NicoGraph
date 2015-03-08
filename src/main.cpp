@@ -48,8 +48,25 @@ class EchoHandlerFactory : public RequestHandlerFactory {
 };
 
 int main(int argc, char* argv[]) {
-  nicopp::GraphLoader loader = nicopp::GraphLoader();
-  loader.loadGraph("2011-01-01 00:00:00.000000", "2011-02-01 00:00:00.000000", 1400);
+  nicopp::LoaderPool pool;
+  nicopp::LoaderPool::Session loader(pool);
+  MYSQL_TIME from;
+  from.year = 2011;
+  from.month = 0;
+  from.day = 1;
+  from.hour = 0;
+  from.minute = 0;
+  from.second = 0;
+  from.second_part = 0;
+  MYSQL_TIME to;
+  to.year = 2012;
+  to.month = 1;
+  to.day = 1;
+  to.hour = 0;
+  to.minute = 0;
+  to.second = 0;
+  to.second_part = 0;
+  loader->loadGraph(from, to, 150000);
   LOG(INFO) << "done";
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   google::InitGoogleLogging(argv[0]);
