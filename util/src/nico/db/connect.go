@@ -7,11 +7,10 @@ import (
 )
 
 const DB = "nico"
-const Server = "192.168.1.130:3306"
 
-func Connect() *sql.DB {
+func Connect(server string) *sql.DB {
 	var err error
-	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s)/%s", User, Password, Server, DB))
+	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:3306)/%s", User, Password, server, DB))
 	if err != nil {
 		panic(err)
 	}

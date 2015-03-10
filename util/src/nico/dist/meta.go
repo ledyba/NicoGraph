@@ -19,9 +19,9 @@ type MetaInfo struct {
 	Tags        []TagItem
 }
 type TagItem struct {
-	Tag      string `json:"tag"`
-	Lock     bool   `json:"lock"`
-	Category bool   `json:"category"`
+	Tag string `json:"tag"`
+	//	Lock     bool   `json:"lock"`
+	//	Category bool   `json:"category"`
 }
 
 type TagCount struct {
@@ -100,7 +100,11 @@ func LoadDataSet(fname string, metas []MetaInfo, limit int64) []MetaInfo {
 	cnt := 0
 	for bline, _, err = reader.ReadLine(); err == nil; bline, _, err = reader.ReadLine() {
 		meta := MetaInfo{}
-		json.Unmarshal(bline, &meta)
+		e := json.Unmarshal(bline, &meta)
+		if e != nil {
+			log.Printf("[Warn] %v for %v", e, string(bline))
+			continue
+		}
 		if meta.ViewCounter >= limit {
 			metas = append(metas, meta)
 			cnt++

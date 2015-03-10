@@ -1,14 +1,14 @@
 package main
 
 import (
+	"encoding/binary"
 	"github.com/ledyba/go-louvain/louvain"
 	"log"
 	opener "nico/db"
-	"strings"
 )
 
 func main() {
-	db := opener.Connect()
+	db := opener.Connect("localhost")
 	defer db.Close()
 	err := db.Ping()
 	if err != nil {
@@ -16,25 +16,24 @@ func main() {
 	}
 	log.Printf("Connected.")
 	rows, err := db.Query("select video_id,view_count,tags from videos where uploaded_at between \"2007-03-05 22:10:10\" and \"2010-03-05 22:10:10\" order by uploaded_at asc limit 150000")
-	tag2index := make(map[string]int)
+	tag2index := make(map[uint32]int)
 	if err != nil {
 		panic(err)
 	}
 	defer rows.Close()
 	var videoId string
 	var viewCount int
-	var tagString string
+	var tags []byte
 	nodes := make([]louvain.Node, 0, 200000)
 	totalLinks := 0
 	for rows.Next() {
-		rows.Scan(&videoId, &viewCount, &tagString)
-		tagsInVideo := strings.Split(tagString, ",")
-		if len(tagsInVideo) <= 1 {
+		rows.Scan(&videoId, &viewCount, &tags)
+		if len(tags) <= 4 {
 			continue
 		}
-		tlen := len(tagsInVideo)
+		tlen := len(tags) / 4
 		for i := 0; i < tlen; i++ {
-			ftag := tagsInVideo[i]
+			ftag := binary.LittleEndian.Uint32(tags[i*4:])
 			fidx, ok := tag2index[ftag]
 			if !ok {
 				tag2index[ftag] = len(nodes)
@@ -45,7 +44,7 @@ func main() {
 				fidx = len(nodes) - 1
 			}
 			for j := i + 1; j < tlen; j++ {
-				ttag := tagsInVideo[j]
+				ttag := binary.LittleEndian.Uint32(tags[j*4:])
 				tidx, ok := tag2index[ttag]
 				if !ok {
 					tag2index[ttag] = len(nodes)
