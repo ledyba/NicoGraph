@@ -54,9 +54,11 @@ exe tester
 exe original
     :
     src/ep/original.cpp
+    src/nico/file.cpp
     src/original/community.cpp
     src/original/graph_binary.cpp
-    src/original/graph.cpp
+    glog
+    gflags
     :
     <link>shared
     ;
