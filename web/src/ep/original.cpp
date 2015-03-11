@@ -21,45 +21,58 @@ int main(int argc, char* argv[]) {
 	int const from = 0;
 	int const to = 150000;
 	std::vector<nicopp::Node> nodes;
-	std::vector<size_t> tag2index(dset.tags(),0);
 	size_t totalLink = 0;
-	for (int v=from;v<to;v++){
-		nicopp::Video const& video = dset.video(v);
-		size_t tagCount = 10;
-		for(unsigned int i=0;i<10;i++){
-			int const ftag = video.tags[i];
-			if(ftag < 0){
-				tagCount = i;
-				break;
-			}
-			size_t fidx = tag2index[ftag];
-			if(fidx <= 0){
-				fidx = nodes.size();
-				nodes.emplace_back();
-				tag2index[ftag] = fidx+1;
-			}else{
-				fidx--;
-			}
-			for(unsigned int j=i+1;j<10;j++){
-				int const ttag = video.tags[j];
-				if(ttag < 0){
+	{
+		std::vector<size_t> tag2index(dset.tags(),0);
+		std::vector<std::unordered_map<int,int> > links;
+		std::vector<int> degrees;
+		for (int v=from;v<to;v++){
+			nicopp::Video const& video = dset.video(v);
+			size_t tagCount = 10;
+			for(unsigned int i=0;i<10;i++){
+				int const ftag = video.tags[i];
+				if(ftag < 0){
+					tagCount = i;
 					break;
 				}
-				size_t tidx = tag2index[ttag];
-				if(tidx <= 0){
-					tidx = nodes.size();
-					nodes.emplace_back();
-					tag2index[ttag] = tidx+1;
+				size_t fidx = tag2index[ftag];
+				if(fidx <= 0){
+					fidx = links.size();
+					links.emplace_back();
+					degrees.emplace_back();
+					tag2index[ftag] = fidx+1;
 				}else{
-					tidx--;
+					fidx--;
 				}
-				nicopp::Node& fnode = nodes[fidx];
-				nicopp::Node& tnode = nodes[tidx];
-				fnode.addLink(tidx, 1);
-				tnode.addLink(fidx, 1);
+				for(unsigned int j=i+1;j<10;j++){
+					int const ttag = video.tags[j];
+					if(ttag < 0){
+						break;
+					}
+					size_t tidx = tag2index[ttag];
+					if(tidx <= 0){
+						tidx = links.size();
+						links.emplace_back();
+						degrees.emplace_back();
+						tag2index[ttag] = tidx+1;
+					}else{
+						tidx--;
+					}
+					links[fidx][tidx]++;
+					links[tidx][fidx]++;
+					degrees[fidx]++;
+					degrees[tidx]++;
+				}
 			}
+			totalLink += tagCount * (tagCount - 1);
 		}
-		totalLink += tagCount * (tagCount - 1);
+		nodes.resize(links.size());
+		for (unsigned int i = 0;i<nodes.size();i++){
+			nicopp::Node& node = nodes[i];
+			std::unordered_map<int,int>& link = links[i];
+			node.degree(degrees[i]);
+			node.neighbors().insert(node.neighbors().end(), link.begin(), link.end());
+		}
 	}
 
 	bool run = true;
