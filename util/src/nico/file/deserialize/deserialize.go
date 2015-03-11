@@ -1,11 +1,11 @@
 package file
 
 import (
-	"log"
-	"os"
-	"io"
 	"bufio"
 	"encoding/binary"
+	"io"
+	"log"
+	"os"
 )
 
 type Video struct {
@@ -90,5 +90,5 @@ func LoadDB(tagf, vf, linkf string) *DB {
 	if err != io.EOF {
 		panic(err)
 	}
-	return db;
+	return db
 }

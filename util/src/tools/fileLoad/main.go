@@ -3,16 +3,17 @@ package main
 import (
 	"github.com/ledyba/go-louvain/louvain"
 	"log"
+	file "nico/file/deserialize"
 	"os"
 	"runtime/pprof"
-	file "nico/file/deserialize"
+	"time"
 )
 
-
-func onece(db *file.DB) {
+func toGraph(db *file.DB) *louvain.Graph {
 	nodes := make([]louvain.Node, 0, 200000)
 	totalLinks := 0
 	tag2index := make([]int, len(db.Tags))
+	links := make([]map[int]int, 0, 2000)
 	for v := 0; v < 150000; v++ {
 		video := &db.Videos[v]
 		tagLength := 10
@@ -26,9 +27,9 @@ func onece(db *file.DB) {
 			if fidx == 0 {
 				tag2index[ftag] = len(nodes) + 1
 				nodes = append(nodes, louvain.Node{
-					Data:  ftag,
-					Links: make(map[int]int),
+					Data: ftag,
 				})
+				links = append(links, make(map[int]int))
 				fidx = len(nodes) - 1
 			} else {
 				fidx--
@@ -42,32 +43,29 @@ func onece(db *file.DB) {
 				if tidx == 0 {
 					tag2index[ttag] = len(nodes) + 1
 					nodes = append(nodes, louvain.Node{
-						Data:  ttag,
-						Links: make(map[int]int),
+						Data: ttag,
 					})
+					links = append(links, make(map[int]int))
 					tidx = len(nodes) - 1
 				} else {
 					tidx--
 				}
-				fnode := &nodes[fidx]
-				fnode.Links[tidx]++
-				fnode.Degree++
-				tnode := &nodes[tidx]
-				tnode.Links[fidx]++
-				tnode.Degree++
+				nodes[fidx].Degree++
+				nodes[fidx].Degree++
+				links[fidx][tidx]++
+				links[tidx][fidx]++
 			}
 		}
 		totalLinks += tagLength * (tagLength - 1)
 	}
-	graph := louvain.MakeNewGraphFromNodes(nodes, totalLinks, func([]*louvain.Node) interface{} { return true })
-	log.Printf("done: %v tags, edges: %v", len(graph.Nodes), totalLinks)
-	for i := 0; i < 5; i++ {
-		graph = graph.NextLevel(4, 0)
-		if i == 0{
-			//graph.Print()
+	for i := range links {
+		node := &nodes[i]
+		node.Links = make([]louvain.Link, 0, len(links[i]))
+		for to, weight := range links[i] {
+			node.Links = append(node.Links, louvain.Link{to, weight})
 		}
-		log.Printf("done: %v tags, edges: %v", len(graph.Nodes), totalLinks)
 	}
+	return louvain.MakeNewGraphFromNodes(nodes, totalLinks, func([]*louvain.Node) interface{} { return true })
 }
 
 func main() {
@@ -82,7 +80,17 @@ func main() {
 		pprof.StartCPUProfile(f)
 		defer pprof.StopCPUProfile()
 	}
-	for i := 0; i < 1; i++ {
-		onece(db)
+	graph := toGraph(db)
+	now := time.Now()
+	for i := 0; i < 10; i++ {
+		g := graph
+		for j := 0; j < 5; j++ {
+			g = g.NextLevel(4, 0)
+			if i == 0 {
+				//graph.Print()
+			}
+			log.Printf("done: %v tags, edges: %v", len(g.Nodes), g.Total)
+		}
 	}
+	log.Printf("Epalsed: %v", float64(time.Now().Sub(now).Nanoseconds())/1000.0/1000.0)
 }

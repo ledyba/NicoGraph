@@ -1,4 +1,4 @@
-.PHONY: all fmt deploy bench test tags
+.PHONY: all fmt deploy bench test tags prof
 
 all: fmt
 	GOPATH=$(shell pwd):${GOPATH} GOBIN=$(shell pwd)/bin go install -v -gcflags -N ./...
@@ -12,6 +12,9 @@ deploy: fmt
 	scp bin/exporter ledyba.org:/tmp
 	scp bin/exportVideo ledyba.org:/tmp
 	scp bin/exportTags ledyba.org:/tmp
+
+prof:
+	GOPATH=$(shell pwd):${GOPATH} GOBIN=$(shell pwd)/bin go tool pprof bin/fileLoad prof
 
 rasp: fmt
 	GOARM=5 GOOS=linux GOARCH=arm GOPATH=$(shell pwd):${GOPATH} GOBIN=$(shell pwd)/bin \
