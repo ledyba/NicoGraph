@@ -145,17 +145,9 @@ func onece(db *DB) {
 	}
 	graph := louvain.MakeNewGraphFromNodes(nodes, totalLinks, func([]*louvain.Node) interface{} { return true })
 	log.Printf("done: %v tags, edges: %v", len(graph.Nodes), totalLinks)
-	for i := 0; i < 20; i++ {
-		graph = graph.NextLevel(10, float32(-1000))
+	for i := 0; i < 5; i++ {
+		graph = graph.NextLevel(10, float32(0))
 		log.Printf("done: %v tags, edges: %v", len(graph.Nodes), totalLinks)
-	}
-	log.Printf("Enum all links:")
-	for i := range graph.Nodes {
-		node := &graph.Nodes[i]
-		log.Printf("%v: Self Loop: %v/%v", i, node.SelfLoop, node.Degree)
-		for link, weight := range node.Links {
-			log.Printf("%v->%v: %v", i, link, weight)
-		}
 	}
 }
 
@@ -171,7 +163,7 @@ func main() {
 		pprof.StartCPUProfile(f)
 		defer pprof.StopCPUProfile()
 	}
-	for i := 0; i < 10; i++ {
+	for i := 0; i < 1; i++ {
 		onece(db)
 	}
 }
