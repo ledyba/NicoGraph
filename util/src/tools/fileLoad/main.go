@@ -15,7 +15,7 @@ func onece(db *file.DB) {
 	tag2index := make([]int, len(db.Tags))
 	for v := 0; v < 150000; v++ {
 		video := &db.Videos[v]
-		tagLength := 0
+		tagLength := 10
 		for i := 0; i < 10; i++ {
 			ftag := video.Tags[i]
 			if ftag < 0 {
@@ -71,6 +71,7 @@ func onece(db *file.DB) {
 }
 
 func main() {
+	log.SetFlags(log.Lmicroseconds)
 	db := file.LoadDB("compiled/tagf", "compiled/vf", "compiled/linkf")
 	log.Printf("All Data Loaded: %v videos", len(db.Videos))
 	{

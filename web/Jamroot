@@ -55,6 +55,8 @@ exe original
     :
     src/ep/original.cpp
     src/nico/file.cpp
+    src/graph/graph.cpp
+    src/graph/loader.cpp
     src/original/community.cpp
     src/original/graph_binary.cpp
     glog

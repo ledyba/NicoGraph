@@ -35,7 +35,7 @@ std::vector<T> load(std::string const& fname){
 	fseeko(f, 0, SEEK_SET);
 	size_t size = to-from;
 	std::vector<T> buff;
-	buff.reserve(size/sizeof(T));
+	buff.resize(size/sizeof(T));
 	size_t read = fread(buff.data(), 1, size, f);
 	if (read < size){
 		LOG(FATAL) << "Size unmatch" << read << " != " << size;
@@ -55,6 +55,10 @@ DataSet::DataSet(std::vector<char>&& tagBuff, std::vector<char>&& videoIdBuff, s
 ,videoIds_(parse(videoIdBuff_.data()))
 ,videos_(std::move(videos))
 {
+	LOG(INFO) << "DataSet Loaded." << std::endl
+	          << tags_.size() << " tags" << std::endl
+	          << videoIds_.size() << " videos" << std::endl
+	          << videos_.size() << " entries";
 }
 
 }

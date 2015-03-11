@@ -35,9 +35,12 @@ public:
 	DataSet& operator = (DataSet const&) = delete;
 	~DataSet() noexcept = default;
 public:
-	std::vector<const char*> const& tags() const{ return tags_; };
-	std::vector<const char*> const& videoIds() const{ return tags_; };
-	std::vector<Video> const& videos() const{ return videos_; };
+	inline char const* const& tag(size_t const i) const{ return tags_[i]; };
+	inline char const* const& videoId(size_t const i) const{ return tags_[i]; };
+	inline Video const& video(size_t const cnt) const{ return videos_[cnt]; };
+	inline size_t tags() const{ return tags_.size(); };
+	inline size_t videoIds() const{ return tags_.size(); };
+	inline size_t videos() const{ return videos_.size(); };
 };
 
 }
