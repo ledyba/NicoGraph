@@ -117,7 +117,7 @@ func onece(db *DB) {
 			} else {
 				fidx--
 			}
-			for j := i + 1; j < 10 && video.Tags[j] >= 0; j++ {
+			for j := i + 1; j < 10; j++ {
 				ttag := video.Tags[j]
 				if ttag < 0 {
 					break
