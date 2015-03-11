@@ -6,6 +6,10 @@
 #include <chrono>
 #include <signal.h>
 
+#include "../original/graph.h"
+#include "../original/community.h"
+
 int main(int argc, char* argv[]) {
-  return 0;
+	Graph g;
+	return 0;
 }

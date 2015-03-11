@@ -54,6 +54,9 @@ exe tester
 exe original
     :
     src/ep/original.cpp
+    src/original/community.cpp
+    src/original/graph_binary.cpp
+    src/original/graph.cpp
     :
     <link>shared
     ;

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 	"nico/dist"
-	file "nico/file"
+	file "nico/file/serialize"
 	"os"
 	"runtime"
 )
