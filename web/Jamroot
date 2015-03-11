@@ -23,7 +23,7 @@ project
 
 exe nicopp
     :
-    src/main.cpp
+    src/ep/nicopp.cpp
     src/graph/graph.cpp
     src/graph/loader.cpp
     pthread
@@ -32,6 +32,28 @@ exe nicopp
     gflags
     proxygenhttpserver
     mysqlclient
+    :
+    <link>shared
+    ;
+
+exe tester
+    :
+    src/ep/tester.cpp
+    src/graph/graph.cpp
+    src/graph/loader.cpp
+    pthread
+    folly
+    glog
+    gflags
+    proxygenhttpserver
+    mysqlclient
+    :
+    <link>shared
+    ;
+
+exe original
+    :
+    src/ep/original.cpp
     :
     <link>shared
     ;

@@ -146,7 +146,10 @@ func onece(db *DB) {
 	graph := louvain.MakeNewGraphFromNodes(nodes, totalLinks, func([]*louvain.Node) interface{} { return true })
 	log.Printf("done: %v tags, edges: %v", len(graph.Nodes), totalLinks)
 	for i := 0; i < 5; i++ {
-		graph = graph.NextLevel(10, float32(0))
+		graph = graph.NextLevel(4, 0)
+		if i == 0{
+			//graph.Print()
+		}
 		log.Printf("done: %v tags, edges: %v", len(graph.Nodes), totalLinks)
 	}
 }

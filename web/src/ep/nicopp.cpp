@@ -15,7 +15,7 @@
 
 #include <unistd.h>
 
-#include "graph/loader.h"
+#include "../graph/loader.h"
 
 using namespace proxygen;
 
