@@ -95,7 +95,7 @@ func LoadDataSet(fname string, metas []MetaInfo, limit int64) []MetaInfo {
 	if err != nil {
 		panic(err)
 	}
-	reader := bufio.NewReader(gzr)
+	reader := bufio.NewReaderSize(gzr, 1024*1024)
 	var bline []byte
 	cnt := 0
 	for bline, _, err = reader.ReadLine(); err == nil; bline, _, err = reader.ReadLine() {

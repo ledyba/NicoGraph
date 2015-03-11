@@ -1,4 +1,4 @@
-.PHONY: all fmt deploy bench test
+.PHONY: all fmt deploy bench test tags
 
 all: fmt
 	GOPATH=$(shell pwd):${GOPATH} GOBIN=$(shell pwd)/bin go install -v -gcflags -N ./...
@@ -9,18 +9,24 @@ fmt:
 deploy: fmt
 	GOOS=linux GOARCH=amd64 GOPATH=$(shell pwd):${GOPATH} GOBIN=$(shell pwd)/bin \
 		go install -v -gcflags -N ./...
-	scp bin/linux_amd64/exportTags ledyba.org:/tmp
-	scp bin/linux_amd64/exporter ledyba.org:/tmp
+	scp bin/exporter ledyba.org:/tmp
+	scp bin/exportVideo ledyba.org:/tmp
+	scp bin/exportTags ledyba.org:/tmp
 
 rasp: fmt
 	GOARM=5 GOOS=linux GOARCH=arm GOPATH=$(shell pwd):${GOPATH} GOBIN=$(shell pwd)/bin \
 		go install -v -gcflags -N ./...
 	scp bin/linux_arm/exporter 192.168.1.128:/tmp
 
-tags:
-	scp ledyba.org:/tmp/tags tags
-	sort --buffer-size=128M tags --parallel=6 -o tags.sorted
-	uniq tags.sorted tags.sorted.uniq
+tags: all
+	#bin/exportTags
+	LANG=C sort --buffer-size=8G tags --parallel=8 -o tags.sorted
+	LANG=C uniq tags.sorted tags.sorted.uniq
+	scp tags.sorted.uniq ledyba.org:/tmp/tags
+	#mysqlimport -urails -prails -c name -L --use-threads=16 -d --fields-escaped-by='' -v nico tags
+
+videos:
+	mysql -urails -prails --local-infile nico -e "LOAD DATA LOCAL INFILE '/tmp/videos' INTO TABLE videos FIELDS ESCAPED BY '' (video_id, view_count, uploaded_at, @var1) SET tags = UNHEX(@var1)"
 
 bench:
 	GOPATH=$(shell pwd):${GOPATH} GOBIN=$(shell pwd)/bin go test -bench=. tools/bench
