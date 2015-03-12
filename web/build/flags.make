@@ -1,0 +1,1 @@
+CXX_DEFINES=-I/home/psi/workspace/cpp/nico/web/external

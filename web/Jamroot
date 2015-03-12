@@ -12,40 +12,44 @@ project
     : build-dir bin
     : requirements
         <library>pthread
-        <library>folly
         <library>glog
         <library>gflags
-        <library>proxygenhttpserver
-        <library>mysqlclient
+        <library>boost_system
         <library>profiler
         <toolset>gcc:<cxxflags>-std=gnu++11
+    ;
+
+lib graph
+	:
+    src/graph/graph.cpp
+    pthread
+    glog
+    gflags
+    :
     ;
 
 exe nicopp
     :
     src/ep/nicopp.cpp
-    src/graph/graph.cpp
-    src/graph/loader.cpp
     pthread
-    folly
     glog
     gflags
-    proxygenhttpserver
-    mysqlclient
+    boost_system
+    graph
     :
+    <include>external/
     <link>shared
     ;
 
-exe profiler
+exe bench
     :
-    src/ep/profiler.cpp
+    src/ep/bench.cpp
     src/nico/file.cpp
-    src/graph/graph.cpp
-    src/graph/loader.cpp
     src/original/community.cpp
     src/original/graph_binary.cpp
     glog
     gflags
+    graph
     profiler
     :
     <link>shared
