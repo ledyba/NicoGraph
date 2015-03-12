@@ -36,14 +36,12 @@ Graph Graph::nextLevel(int const max, float const precision){
 		
 		std::vector<int> neighLinks(nNodes, 0);
 
-		neighLinks.
 		std::vector<int> neighComm;
 		neighComm.reserve(nNodes);
 		int changed = nNodes;
 		int cnt = 0;
 		int const changeLimit = nNodes/100;
 		shuffle(order);
-		shuffle()
 		while(changed > changeLimit){
 			if(max > 0 && cnt >= max){
 				LOG(WARNING) << "Exceed Limit Pass";
