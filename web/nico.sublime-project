@@ -5,5 +5,9 @@
 			"follow_symlinks": true,
 			"path": "."
 		}
-	]
+	],
+	"settings":
+	{
+		"clangcomplete_default_options": ["-I/home/psi/workspace/cpp/nico/web/external", "-std=c++11"]
+	},
 }
