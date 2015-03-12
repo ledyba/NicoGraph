@@ -8,6 +8,10 @@
 
 #include <gflags/gflags.h>
 #include <glog/logging.h>
+#define DEBUG
+#ifdef DEBUG
+#include <google/profiler.h>
+#endif
 
 #include "../original/community.h"
 #include "../nico/file.h"
@@ -18,6 +22,9 @@ int main(int argc, char* argv[]) {
 	google::InitGoogleLogging(argv[0]);
 	LOG(INFO) << "Running...";
 	nicopp::DataSet dset(std::move(nicopp::DataSet::Load("compiled/tagf","compiled/vf","compiled/linkf")));
+#ifdef DEBUG
+	ProfilerStart ("prof.out");
+#endif
 	int const from = 0;
 	int const to = 150000;
 	std::vector<nicopp::Node> nodes;
@@ -29,7 +36,7 @@ int main(int argc, char* argv[]) {
 		for (int v=from;v<to;v++){
 			nicopp::Video const& video = dset.video(v);
 			size_t tagCount = 10;
-			for(unsigned int i=0;i<10;i++){
+			for(unsigned int i=0;i<10;++i){
 				int const ftag = video.tags[i];
 				if(ftag < 0){
 					tagCount = i;
@@ -44,7 +51,7 @@ int main(int argc, char* argv[]) {
 				}else{
 					fidx--;
 				}
-				for(unsigned int j=i+1;j<10;j++){
+				for(unsigned int j=i+1;j<10;++j){
 					int const ttag = video.tags[j];
 					if(ttag < 0){
 						break;
@@ -58,16 +65,16 @@ int main(int argc, char* argv[]) {
 					}else{
 						tidx--;
 					}
-					links[fidx][tidx]++;
-					links[tidx][fidx]++;
-					degrees[fidx]++;
-					degrees[tidx]++;
+					++links[fidx][tidx];
+					++links[tidx][fidx];
+					++degrees[fidx];
+					++degrees[tidx];
 				}
 			}
 			totalLink += tagCount * (tagCount - 1);
 		}
 		nodes.resize(links.size());
-		for (unsigned int i = 0;i<nodes.size();i++){
+		for (unsigned int i = 0;i<nodes.size();++i){
 			nicopp::Node& node = nodes[i];
 			std::unordered_map<int,int>& link = links[i];
 			node.degree(degrees[i]);
@@ -75,8 +82,13 @@ int main(int argc, char* argv[]) {
 		}
 	}
 
-	bool run = true;
 	std::clock_t t = std::clock();
+	for(unsigned int i=0;i<nodes.size();i++){
+		nicopp::Node& node = nodes[i];
+		node.degree();
+	}
+	/*
+	bool run = true;
 	Graph g;
 	g.total_weight = totalLink;
 	int degreeTotal = 0;
@@ -100,6 +112,7 @@ int main(int argc, char* argv[]) {
 		LOG(INFO) << from << " -> " << g.degrees.size() << " Nodes";
 	}
 	LOG(INFO) << "Lap: " << (std::clock() - t);
+	*/
 
 	t = std::clock();
 	nicopp::Graph graph (totalLink, std::move(nodes));
@@ -108,5 +121,8 @@ int main(int argc, char* argv[]) {
 		graph = std::move(graph.nextLevel(4, .0));
 	}
 	LOG(INFO) << "Lap: " << (std::clock() - t);
+#ifdef DEBUG
+	ProfilerStop ();
+#endif
 	return 0;
 }

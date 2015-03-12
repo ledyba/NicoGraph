@@ -3,11 +3,10 @@ import os ;
 BOOST_INCLUDE = [ os.environ BOOST_INCLUDE ] ;
 
 lib pthread : : <name>pthread ;
-lib folly : : <name>folly ;
 lib glog : : <name>glog ;
 lib gflags : : <name>gflags ;
-lib proxygenhttpserver : : <name>proxygenhttpserver ;
-lib mysqlclient : : <name>mysqlclient ;
+lib profiler : : <name>profiler ;
+lib boost_system : : <name>boost_system ;
 
 project
     : build-dir bin
@@ -18,6 +17,7 @@ project
         <library>gflags
         <library>proxygenhttpserver
         <library>mysqlclient
+        <library>profiler
         <toolset>gcc:<cxxflags>-std=gnu++11
     ;
 
@@ -36,24 +36,9 @@ exe nicopp
     <link>shared
     ;
 
-exe tester
+exe profiler
     :
-    src/ep/tester.cpp
-    src/graph/graph.cpp
-    src/graph/loader.cpp
-    pthread
-    folly
-    glog
-    gflags
-    proxygenhttpserver
-    mysqlclient
-    :
-    <link>shared
-    ;
-
-exe original
-    :
-    src/ep/original.cpp
+    src/ep/profiler.cpp
     src/nico/file.cpp
     src/graph/graph.cpp
     src/graph/loader.cpp
@@ -61,6 +46,7 @@ exe original
     src/original/graph_binary.cpp
     glog
     gflags
+    profiler
     :
     <link>shared
     ;

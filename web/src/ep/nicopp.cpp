@@ -25,8 +25,8 @@ using folly::SocketAddress;
 
 using Protocol = HTTPServer::Protocol;
 
-DEFINE_int32(http_port, 11000, "Port to listen on with HTTP protocol");
-DEFINE_int32(spdy_port, 11001, "Port to listen on with SPDY protocol");
+DEFINE_int32(http_port, 8083, "Port to listen on with HTTP protocol");
+DEFINE_int32(spdy_port, 8084, "Port to listen on with SPDY protocol");
 DEFINE_int32(thrift_port, 10000, "Port to listen on for thrift");
 DEFINE_string(ip, "localhost", "IP/Hostname to bind to");
 DEFINE_int32(threads, 0, "Number of threads to listen on. Numbers <= 0 "
@@ -48,26 +48,6 @@ class EchoHandlerFactory : public RequestHandlerFactory {
 };
 
 int main(int argc, char* argv[]) {
-  nicopp::LoaderPool pool;
-  nicopp::LoaderPool::GraphSession loader(pool);
-  MYSQL_TIME from;
-  from.year = 2011;
-  from.month = 0;
-  from.day = 1;
-  from.hour = 0;
-  from.minute = 0;
-  from.second = 0;
-  from.second_part = 0;
-  MYSQL_TIME to;
-  to.year = 2012;
-  to.month = 1;
-  to.day = 1;
-  to.hour = 0;
-  to.minute = 0;
-  to.second = 0;
-  to.second_part = 0;
-  loader->loadGraph(from, to, 150000);
-  LOG(INFO) << "done";
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   google::InitGoogleLogging(argv[0]);
   google::InstallFailureSignalHandler();
