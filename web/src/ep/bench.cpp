@@ -10,7 +10,8 @@
 #include <glog/logging.h>
 #define DEBUG
 #ifdef DEBUG
-#include <google/profiler.h>
+//#include <google/profiler.h>
+#include <gperftools/profiler.h>
 #endif
 
 #include "../original/community.h"

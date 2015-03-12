@@ -17,6 +17,8 @@ project
         <library>boost_system
         <library>profiler
         <toolset>gcc:<cxxflags>-std=gnu++11
+        <toolset>darwin:<cxxflags>-std=c++11
+        <toolset>clang:<cxxflags>-std=c++11
     ;
 
 lib graph

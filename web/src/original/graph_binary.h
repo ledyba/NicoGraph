@@ -20,7 +20,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
+#ifndef __APPLE__
 #include <malloc.h>
+#endif
 #include <iostream>
 #include <iomanip>
 #include <fstream>
