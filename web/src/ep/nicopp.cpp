@@ -26,4 +26,5 @@ int main(int argc, char* argv[]) {
 	nico_server.listen(9002);
 	nico_server.start_accept();
 	nico_server.run();
+	nico_server.start_accept();
 }
