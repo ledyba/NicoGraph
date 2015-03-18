@@ -46,7 +46,7 @@ private:
 	std::vector<Node*> children_;
 	friend class Graph;
 public:
-	Node():neighbors_(),selfLoops_(0),degree_(0),parent_(nullptr), children_(){}
+	Node() noexcept:neighbors_(),selfLoops_(0),degree_(0),parent_(nullptr), children_(){}
 	Node(Node const&) = default;
 	Node(Node&&) noexcept = default;
 	Node& operator= (Node&&) noexcept = default;
@@ -66,7 +66,7 @@ private:
 	Shuffler shuffler_;
 	Graph(Graph&& m) = default;
 public:
-	inline Graph(size_t totalLinks, std::vector<Node>&& nodes)
+	inline Graph(size_t totalLinks, std::vector<Node>&& nodes) noexcept
 	:totalLinks_(totalLinks)
 	,nodes_(std::move(nodes))
 	,shuffler_()
