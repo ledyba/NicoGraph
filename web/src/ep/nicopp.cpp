@@ -14,6 +14,7 @@
 DEFINE_int32(port, 9003, "Port to listen on with HTTP protocol");
 typedef websocketpp::server<websocketpp::config::asio> server;
 void on_message(websocketpp::connection_hdl hdl, server::message_ptr msg) {
+	msg->set_compressed(true);
 }
 
 int main(int argc, char* argv[]) {

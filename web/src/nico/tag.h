@@ -1,5 +1,5 @@
 #include "../graph/graph.h"
-
+#pragma once
 namespace nicopp{
 
 struct Tag final{
@@ -8,8 +8,8 @@ struct Tag final{
 };
 struct TagMergeFn final{
 	Tag operator()(std::vector<nicopp::Node<Tag>*> const& children){
-		int maxView = 0;
-		int maxTag;
+		int maxView = -1;
+		int maxTag = -1;
 		for(nicopp::Node<Tag> const*const node : children){
 			if(node->payload().viewCount >= maxView){
 				maxView = node->payload().viewCount;

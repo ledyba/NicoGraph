@@ -9,33 +9,11 @@
 #include <vector>
 #include <unordered_map>
 #include <random>
-
+ #include <algorithm>
+#include <glog/logging.h>
+ 
 namespace nicopp {
 
-namespace {
-class Shuffler final {
-	std::mt19937 mt_;
-public:
-	Shuffler()
-	:mt_(std::random_device()()){
-
-	}
-	~Shuffler() noexcept = default;
-	void operator()(std::vector<int>& vec){
-		const int size = vec.size();
-		for(unsigned int n = size - 1; n >= 1; --n) {
-			unsigned int k = (mt_()) % (n + 1);
-			if(k != n) {
-				std::swap(vec[k], vec[n]);
-			}
-		}
-	}
-	Shuffler(Shuffler&&) noexcept = default;
-	Shuffler& operator=(Shuffler&&) noexcept = default;
-	Shuffler(Shuffler const&) = delete;
-	Shuffler& operator=(Shuffler const&) = delete;
-};
-}
 template<typename Info, typename MergeFn> class Graph;
 
 template<typename Info>
@@ -71,18 +49,18 @@ class Graph final{
 private:
 	size_t totalLinks_;
 	std::vector<Node<Info> > nodes_;
-	Shuffler shuffler_;
-	Graph(Graph&& m) = default;
+	std::mt19937 mt_;
 public:
 	inline Graph(size_t totalLinks, std::vector<Node<Info> >&& nodes)
 	:totalLinks_(totalLinks)
 	,nodes_(std::move(nodes))
-	,shuffler_()
+	,mt_(std::random_device()())
 	{};
 	Graph() noexcept = delete;
 	~Graph() noexcept = default;
 	Graph(Graph const&) = delete;
 	Graph& operator= (Graph const&) = delete;
+	Graph(Graph&& m) = default;
 	Graph& operator= (Graph&&) = default;
 public:
 	Graph nextLevel(int const max, float const precision) {
@@ -105,7 +83,7 @@ public:
 			int changed = nNodes;
 			int cnt = 0;
 			int const changeLimit = nNodes/100;
-			shuffler_(order);
+			std::shuffle(std::begin(order), std::end(order), mt_);
 			while(changed > changeLimit){
 				if(max > 0 && cnt >= max){
 					LOG(WARNING) << "Exceed Limit Pass";
