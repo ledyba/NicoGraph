@@ -1,25 +1,54 @@
-(function(){
+var cl;
+$(function() {
 
-var url = "ws://localhost:9002/";
-window.onload = function main() {
-    var ws;
+    var url = "ws://localhost:9002/";
+    window.onload = function main() {
+        function Client() {
+            var self={};
+            var ws;
+            // FireFoxとの互換性を考慮してインスタンス化
+            if ("WebSocket" in window) {
+                ws = new WebSocket(url);
+            } else if ("MozWebSocket" in window) {
+                ws = new MozWebSocket(url);
+            }
+            self.start = function start() {
+                ws.onopen = function() {
+                    console.log("Connection Established.");
+                    ws.send("TELL RANGE");
+                    ws.onmessage = function(event) {
+                        var range = event.data.split(":");
+                        self.min = parseInt(range[0], 10);
+                        self.max = parseInt(range[1], 10);
+                        console.log("RANGE: " + self.min + " -> " + self.max);
+                        console.log( $( "#selector" ).slider());
+                        ws.onmessage = null;
+                    }
+                };
+            }
 
-    // FireFoxとの互換性を考慮してインスタンス化
-    if ("WebSocket" in window) {
-        ws = new WebSocket(url);
-    } else if ("MozWebSocket" in window) {
-        ws = new MozWebSocket(url);
+            self.receive = function receive(at) {
+                ws.send(""+Math.round(at)+":"+cl.max);
+                ws.onmessage = function(event) {
+                };
+            }
+            return self;
+        };
+        cl = Client();
+        cl.start();
     }
 
-    // メッセージ受信時のコールバック関数
-    ws.onmessage = function(event) {
-        console.log("受信メッセージ:" + event.data);
-    }
-    //entry point
-    ws.onopen = function(){
-        console.log("on open");
-        ws.send("0:99999999999");
-    };
-}
-
-})()
+});
+$(function() {
+    $("#slider").slider({
+        change: function(event, ui) {
+            console.log(ui.value);
+            cl.receive(((cl.max-cl.min) * ui.value /1000)+cl.min);
+        },
+        slide: function(event, ui) {
+            console.log(ui.value);
+        },
+        min: 0,
+        max: 1000
+    });
+});

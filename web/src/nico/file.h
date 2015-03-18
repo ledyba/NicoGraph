@@ -55,6 +55,8 @@ public:
 	inline size_t tags() const{ return tags_.size(); };
 	inline size_t videoIds() const{ return tags_.size(); };
 	inline size_t videos() const{ return videos_.size(); };
+	inline int64_t min() const { return videos_.front().uploadedAt; };
+	inline int64_t max() const { return videos_.back().uploadedAt; };
 	TagGraph searchTag(uint64_t const from, uint64_t const to, int const limit = -1);
 };
 
