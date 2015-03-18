@@ -1,6 +1,6 @@
 (function(){
 
-var url = "ws://localhost:9004/";
+var url = "ws://localhost:9002/";
 window.onload = function main() {
     var ws;
 
@@ -18,8 +18,7 @@ window.onload = function main() {
     //entry point
     ws.onopen = function(){
         console.log("on open");
-        ws.send("123");
-        ws.send("456");
+        ws.send("0:99999999999");
     };
 }
 

@@ -12,25 +12,29 @@
 #include <websocketpp/server.hpp>
  #include <signal.h>
  #include "../nico/file.h"
+ #include "../util/fmt.h"
+ #include <cstdio>
 
 typedef websocketpp::server<websocketpp::config::asio> server;
 
-DEFINE_int32(port, 9004, "Port to listen on with HTTP protocol");
+DEFINE_int32(port, 9002, "Port to listen on with HTTP protocol");
 std::shared_ptr<server> serv;
 std::shared_ptr<nicopp::DataSet> dataSet;
 
 void onMessage(websocketpp::connection_hdl hdl, server::message_ptr msg) {
 	msg->set_compressed(true);
-	int64_t from = std::atoll(msg->get_payload().c_str());
-	int64_t to = std::atoll(msg->get_payload().c_str());
+	int64_t from = 0;
+	int64_t to = 0;
+	sscanf(msg->get_payload().c_str(), "%ld:%ld", &from, &to);
 	LOG(INFO) << from << "/" << to;
 	using nicopp::TagGraph;
 	TagGraph graph = dataSet->searchTag(from, to, 150000);
-	serv->send(hdl, "HELLO", msg->get_opcode());
+	serv->send(hdl, nicopp::sprintf("Tag: %d", graph.nodes().size()), msg->get_opcode());
 }
 
 void onSigint(int signo){
 	if (serv) {
+		serv->stop();
 		serv->stop_listening();
 	}
 }
