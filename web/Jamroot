@@ -21,15 +21,6 @@ project
         <toolset>clang:<cxxflags>-std=c++11
     ;
 
-lib graph
-	:
-    src/graph/graph.cpp
-    pthread
-    glog
-    gflags
-    :
-    ;
-
 exe nicopp
     :
     src/ep/nicopp.cpp
@@ -37,7 +28,6 @@ exe nicopp
     glog
     gflags
     boost_system
-    graph
     :
     <include>external/
     <link>shared
@@ -51,7 +41,6 @@ exe bench
     src/original/graph_binary.cpp
     glog
     gflags
-    graph
     profiler
     :
     <link>shared
