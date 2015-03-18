@@ -36,15 +36,18 @@ public:
 	Shuffler& operator=(Shuffler const&) = delete;
 };
 }
+template<typename Info, typename MergeFn> class Graph;
 
+template<typename Info>
 class Node final {
 private:
 	std::vector<std::pair<int, int> > neighbors_;
 	int selfLoops_;
 	int degree_;
-	Node* parent_;
-	std::vector<Node*> children_;
-	friend class Graph;
+	Node<Info>* parent_;
+	std::vector<Node<Info>*> children_;
+	template<typename A, typename B> friend class Graph;
+	Info payload_;
 public:
 	Node() noexcept: neighbors_(),selfLoops_(0),degree_(0),parent_(nullptr), children_(){}
 	Node(Node const&) = default;
@@ -57,16 +60,21 @@ public:
 	void selfLoops(int const loop) { selfLoops_ = loop; }
 	std::vector<std::pair<int, int> > const& neighbors() const { return neighbors_; }
 	std::vector<std::pair<int, int> >& neighbors() { return neighbors_; }
+	Info const& payload() const { return this->payload_; };
+	Info& payload() { return this->payload_; };
+	void payload( Info const& p ) { this->payload_ = p; };
+	void payload( Info&& p ) { this->payload_ = std::move(p); };
 };
 
+template<typename Info, typename MergeFn>
 class Graph final{
 private:
 	size_t totalLinks_;
-	std::vector<Node> nodes_;
+	std::vector<Node<Info> > nodes_;
 	Shuffler shuffler_;
 	Graph(Graph&& m) = default;
 public:
-	inline Graph(size_t totalLinks, std::vector<Node>&& nodes)
+	inline Graph(size_t totalLinks, std::vector<Node<Info> >&& nodes)
 	:totalLinks_(totalLinks)
 	,nodes_(std::move(nodes))
 	,shuffler_()
@@ -106,7 +114,7 @@ public:
 				cnt++;
 				changed = 0;
 				for(int pos : order){
-					Node const& node = nodes_[pos];
+					Node<Info> const& node = nodes_[pos];
 					int const nodeTmpComm = tmpComm[pos];
 					int const nodeDegree = node.degree_;
 					/* Calculating Neighbor Communities */
@@ -154,11 +162,11 @@ public:
 		//Calc Next nodes:
 		std::vector<int> oldCommIdx;
 		std::vector<int> c2i(nNodes, 0);
-		std::vector<Node> communities;
+		std::vector<Node<Info> > communities;
 		communities.reserve(nodes_.size()/10);
 		oldCommIdx.reserve(nodes_.size()/10);
 		for(unsigned int i=0;i<nNodes;i++){
-			Node& node = nodes_[i];
+			Node<Info>& node = nodes_[i];
 			int const nodeTmpComm = tmpComm[i];
 			int const c = c2i[nodeTmpComm];
 			if(c <= 0){
@@ -172,10 +180,11 @@ public:
 		}
 		std::vector<std::unordered_map<int,int> > links(communities.size());
 		// Merging edges
+		MergeFn merge;
 		for (unsigned int i=0,maxc=communities.size();i<maxc;i++) {
-			Node& comm = communities[i];
+			Node<Info>& comm = communities[i];
 			int const oldComm = oldCommIdx[i];
-			for (Node* const child : comm.children_) {
+			for (Node<Info>* const child : comm.children_) {
 				child->parent_ = &comm;
 				comm.selfLoops_ += child->selfLoops_;
 				comm.degree_ += child->selfLoops_;
@@ -194,6 +203,7 @@ public:
 			std::unordered_map<int,int> const& link = links[i];
 			comm.neighbors_.reserve(link.size());
 			comm.neighbors_.insert(comm.neighbors_.begin(), link.begin(),link.end());
+			comm.payload_ = merge(comm.children_);
 		}
 		return std::move(Graph(totalLinks_, std::move(communities)));
 	}

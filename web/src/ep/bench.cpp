@@ -18,6 +18,15 @@
 #include "../nico/file.h"
 #include "../graph/graph.h"
 
+class Tag final{
+
+};
+struct TagMergeFn final{
+	Tag operator()(std::vector<nicopp::Node<Tag>*> const& children){
+		return children.front()->payload();
+	}
+};
+
 int main(int argc, char* argv[]) {
 	google::ParseCommandLineFlags(&argc, &argv, true);
 	google::InitGoogleLogging(argv[0]);
@@ -28,7 +37,7 @@ int main(int argc, char* argv[]) {
 #endif
 	int const from = 0;
 	int const to = 150000;
-	std::vector<nicopp::Node> nodes;
+	std::vector<nicopp::Node<Tag>> nodes;
 	size_t totalLink = 0;
 	{
 		std::vector<size_t> tag2index(dset.tags(),0);
@@ -76,7 +85,7 @@ int main(int argc, char* argv[]) {
 		}
 		nodes.resize(links.size());
 		for (unsigned int i = 0;i<nodes.size();++i){
-			nicopp::Node& node = nodes[i];
+			nicopp::Node<Tag>& node = nodes[i];
 			std::unordered_map<int,int>& link = links[i];
 			node.degree(degrees[i]);
 			node.neighbors().insert(node.neighbors().end(), link.begin(), link.end());
@@ -85,7 +94,7 @@ int main(int argc, char* argv[]) {
 
 	std::clock_t t = std::clock();
 	for(unsigned int i=0;i<nodes.size();i++){
-		nicopp::Node& node = nodes[i];
+		nicopp::Node<Tag>& node = nodes[i];
 		node.degree();
 	}
 	/*
@@ -116,7 +125,7 @@ int main(int argc, char* argv[]) {
 	*/
 
 	t = std::clock();
-	nicopp::Graph graph (totalLink, std::move(nodes));
+	nicopp::Graph<Tag,TagMergeFn> graph (totalLink, std::move(nodes));
 	for(int i=0;i<5;i++){
 		LOG(INFO) << graph.nodes() << " nodes / " << graph.edges() << " edges";
 		graph = std::move(graph.nextLevel(4, .0));
