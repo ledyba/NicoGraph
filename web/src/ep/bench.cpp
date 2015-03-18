@@ -35,6 +35,7 @@ int main(int argc, char* argv[]) {
 		std::vector<size_t> tag2index(dset.tags(),0);
 		std::vector<std::unordered_map<int,int> > links;
 		std::vector<int> degrees;
+		std::vector<nicopp::Tag> tags;
 		for (int v=from;v<to;v++){
 			nicopp::Video const& video = dset.video(v);
 			size_t tagCount = 10;
@@ -49,6 +50,7 @@ int main(int argc, char* argv[]) {
 					fidx = links.size();
 					links.emplace_back();
 					degrees.emplace_back();
+					tags.emplace_back(nicopp::Tag{ftag, 0});
 					tag2index[ftag] = fidx+1;
 				}else{
 					fidx--;
@@ -63,6 +65,7 @@ int main(int argc, char* argv[]) {
 						tidx = links.size();
 						links.emplace_back();
 						degrees.emplace_back();
+						tags.emplace_back(nicopp::Tag{ttag, 0});
 						tag2index[ttag] = tidx+1;
 					}else{
 						tidx--;
@@ -72,6 +75,7 @@ int main(int argc, char* argv[]) {
 					++degrees[fidx];
 					++degrees[tidx];
 				}
+				tags[fidx].viewCount += video.viewCount;
 			}
 			totalLink += tagCount * (tagCount - 1);
 		}
@@ -80,6 +84,7 @@ int main(int argc, char* argv[]) {
 			nicopp::Node<nicopp::Tag>& node = nodes[i];
 			std::unordered_map<int,int>& link = links[i];
 			node.degree(degrees[i]);
+			node.payload(tags[i]);
 			node.neighbors().insert(node.neighbors().end(), link.begin(), link.end());
 		}
 	}
