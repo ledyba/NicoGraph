@@ -55,7 +55,7 @@ public:
 	inline size_t tags() const{ return tags_.size(); };
 	inline size_t videoIds() const{ return tags_.size(); };
 	inline size_t videos() const{ return videos_.size(); };
-	Graph<Tag, TagMergeFn> searchTag(uint64_t const from, uint64_t const to, int const limit = -1);
+	TagGraph searchTag(uint64_t const from, uint64_t const to, int const limit = -1);
 };
 
 }

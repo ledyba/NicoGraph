@@ -12,7 +12,7 @@
  #include <algorithm>
 #include <glog/logging.h>
  
-namespace nicopp {
+namespace louvain {
 
 template<typename Info, typename MergeFn> class Graph;
 
@@ -63,7 +63,7 @@ public:
 	Graph(Graph&& m) = default;
 	Graph& operator= (Graph&&) = default;
 public:
-	Graph nextLevel(int const max, float const precision) {
+	Graph nextLevel(int const max=10, float const precision=0.0f) {
 		size_t const nNodes = nodes_.size();
 		std::vector<int> tmpComm(nNodes);
 		{
@@ -185,7 +185,7 @@ public:
 		}
 		return std::move(Graph(totalLinks_, std::move(communities)));
 	}
-	size_t nodes() const{return nodes_.size();}
+	std::vector<Node<Info> > const& nodes() const{return nodes_;}
 	size_t edges() const{return totalLinks_;}
 };
 

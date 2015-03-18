@@ -20,6 +20,16 @@ project
         <toolset>darwin:<cxxflags>-std=c++11
         <toolset>clang:<cxxflags>-std=c++11
     ;
+lib nico
+    :
+    src/nico/file.cpp
+    pthread
+    glog
+    gflags
+    boost_system
+    :
+    <link>shared
+    ;
 
 exe nicopp
     :
@@ -28,6 +38,7 @@ exe nicopp
     glog
     gflags
     boost_system
+    nico
     :
     <include>external/
     <link>shared

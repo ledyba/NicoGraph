@@ -63,8 +63,9 @@ DataSet::DataSet(std::vector<char>&& tagBuff, std::vector<char>&& videoIdBuff, s
 	          << videos_.size() << " entries";
 }
 
-Graph<Tag, TagMergeFn> DataSet::searchTag(uint64_t const from, uint64_t const to, int const limit)
+TagGraph DataSet::searchTag(uint64_t const from, uint64_t const to, int const limit)
 {
+	using louvain::Node;
 	std::vector<Node<Tag>> nodes;
 	size_t totalLink = 0;
 	{
@@ -131,7 +132,7 @@ Graph<Tag, TagMergeFn> DataSet::searchTag(uint64_t const from, uint64_t const to
 			node.neighbors().insert(node.neighbors().end(), link.begin(), link.end());
 		}
 	}
-	return std::move(Graph<Tag,TagMergeFn>(totalLink, std::move(nodes)));
+	return std::move(TagGraph(totalLink, std::move(nodes)));
 }
 
 }

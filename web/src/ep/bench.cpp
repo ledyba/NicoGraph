@@ -54,15 +54,17 @@ int main(int argc, char* argv[]) {
 		}
 		LOG(INFO) << "Lap: " << (std::clock() - t);
 	}*/
-
 	{
 		long t = std::clock();
-		nicopp::Graph<nicopp::Tag,nicopp::TagMergeFn> graph = dset.searchTag(0, 99999999999, 150000);
+		nicopp::TagGraph graph = dset.searchTag(0, 99999999999, 150000);
 		for(int i=0;i<5;i++){
-			LOG(INFO) << graph.nodes() << " nodes / " << graph.edges() << " edges";
+			LOG(INFO) << graph.nodes().size() << " nodes / " << graph.edges() << " edges";
 			graph = std::move(graph.nextLevel(4, .0));
 		}
 		LOG(INFO) << "Lap: " << (std::clock() - t);
+		for (auto const& node : graph.nodes()){
+			LOG(INFO) << "  Node: " << dset.tag(node.payload().tagId) << " / "<< node.selfLoops() << "/"<<node.degree();
+		}
 	}
 #ifdef DEBUG
 	ProfilerStop ();
