@@ -28,6 +28,7 @@ lib nico
     gflags
     boost_system
     :
+    <include>external/
     <link>shared
     ;
 

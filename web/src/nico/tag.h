@@ -1,5 +1,7 @@
-#include "../graph/graph.h"
 #pragma once
+
+#include <louvain/louvain.h>
+
 namespace nicopp{
 
 struct Tag final{
