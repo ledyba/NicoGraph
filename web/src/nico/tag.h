@@ -1,5 +1,6 @@
 #pragma once
 
+#include <vector>
 #include <louvain/louvain.h>
 
 namespace nicopp{
@@ -9,13 +10,14 @@ struct Tag final{
 	int viewCount;
 };
 struct TagMergeFn final{
-	Tag operator()(std::vector<louvain::Node<Tag>*> const& children){
+	Tag operator()(std::vector<louvain::Node<Tag> > const& nodes, std::vector<int> const& children){
 		int maxView = -1;
 		int maxTag = -1;
-		for(louvain::Node<Tag> const*const node : children){
-			if(node->payload().viewCount >= maxView){
-				maxView = node->payload().viewCount;
-				maxTag = node->payload().tagId;
+		for(int idx : children){
+			louvain::Node<Tag> const& node = nodes[idx];
+			if(node.payload().viewCount >= maxView){
+				maxView = node.payload().viewCount;
+				maxTag = node.payload().tagId;
 			}
 		}
 		return Tag{maxTag,maxView};
@@ -23,6 +25,7 @@ struct TagMergeFn final{
 };
 
 typedef louvain::Graph<Tag, TagMergeFn> TagGraph;
+typedef louvain::Node<Tag> TagNode;
 
 }
 

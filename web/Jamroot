@@ -55,5 +55,6 @@ exe bench
     gflags
     profiler
     :
+    <include>external/
     <link>shared
     ;

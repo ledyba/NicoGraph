@@ -30,6 +30,7 @@ $(function() {
             self.receive = function receive(at) {
                 ws.send(""+Math.round(at)+":"+cl.max);
                 ws.onmessage = function(event) {
+                    console.log("received");
                 };
             }
             return self;

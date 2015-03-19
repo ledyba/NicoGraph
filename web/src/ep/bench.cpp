@@ -16,7 +16,7 @@
 
 #include "../original/community.h"
 #include "../nico/file.h"
-#include "../graph/graph.h"
+#include <louvain/louvain.h>
 #include "../nico/tag.h"
 
 int main(int argc, char* argv[]) {
