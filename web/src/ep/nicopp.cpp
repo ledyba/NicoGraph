@@ -21,11 +21,17 @@ DEFINE_int32(port, 9002, "Port to listen on with HTTP protocol");
 std::shared_ptr<server> serv;
 std::shared_ptr<nicopp::DataSet> dataSet;
 void printOne(std::stringstream& ss, std::shared_ptr<nicopp::DataSet> const& dset, nicopp::TagNode const& node){
-	ss << nicopp::sprintf("{\"title\": \"%s\", \"deg\":%d, \"selfLoop\": %d, \"links\":[", node.degree(), node.selfLoops(), dset->tag(node.payload().tagId));
+	ss << nicopp::sprintf("{\"title\":\"%s\",\"deg\":%d,\"selfLoop\":%d,\"links\":[", dset->tag(node.payload().tagId), node.degree(), node.selfLoops());
+	bool fst = true;
 	for(auto const& link : node.neighbors()){
-		ss << link.first << "," << link.second << ",";
+		if (fst){
+			ss << link.first << "," << link.second;
+			fst = false;
+		}else{
+			ss << "," << link.first << "," << link.second;
+		}
 	}
-	ss << "] }\n";
+	ss << "]}\n";
 }
 
 void pullHandler(websocketpp::connection_hdl hdl, server::message_ptr msg) {
