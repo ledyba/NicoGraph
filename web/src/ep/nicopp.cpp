@@ -20,18 +20,28 @@ typedef websocketpp::server<websocketpp::config::asio> server;
 DEFINE_int32(port, 9002, "Port to listen on with HTTP protocol");
 std::shared_ptr<server> serv;
 std::shared_ptr<nicopp::DataSet> dataSet;
-void printOne(std::stringstream& ss, std::shared_ptr<nicopp::DataSet> const& dset, nicopp::TagNode const& node){
-	ss << nicopp::sprintf("{\"title\":\"%s\",\"deg\":%d,\"selfLoop\":%d,\"links\":[", dset->tag(node.payload().tagId), node.degree(), node.selfLoops());
-	bool fst = true;
-	for(auto const& link : node.neighbors()){
-		if (fst){
-			ss << link.first << "," << link.second;
-			fst = false;
-		}else{
-			ss << "," << link.first << "," << link.second;
+void printOne(std::stringstream& nodess, std::stringstream& linkss, std::shared_ptr<nicopp::DataSet> const& dset, int const id, nicopp::TagNode const& node){
+	if(node.neighbors().size() <= 0){
+		return;
+	}
+	if(node.selfLoops() < 1000){
+		return;
+	}
+	{
+		if(nodess.tellp() > 0){
+			nodess  << ",";
 		}
 	}
-	ss << "]}\n";
+	nodess << nicopp::sprintf("{\"id\":%d,\"label\":\"%s\",\"value\":%d}",id, dset->tag(node.payload().tagId), node.selfLoops());
+	for(auto const& link : node.neighbors()){
+		if(link.second < 100){
+			continue;
+		}
+		if(linkss.tellp() > 0){
+			linkss << ",";
+		}
+		linkss << nicopp::sprintf("{\"from\":%d,\"to\":%d,\"value\":%d}", id, link.first, link.second);
+	}
 }
 
 void pullHandler(websocketpp::connection_hdl hdl, server::message_ptr msg) {
@@ -53,13 +63,20 @@ void pullHandler(websocketpp::connection_hdl hdl, server::message_ptr msg) {
 			break;
 		}
 	}
+	std::stringstream nodess;
+	std::stringstream linkss;
 	std::stringstream ss;
 	for(auto it = vecs.crbegin(); it != vecs.crend();++it) {
+		int id = 0;
 		for(auto node = it->nodes().begin(), end = it->nodes().end(); node != end; ++node){
-			printOne(ss, dataSet, *node);
+			printOne(nodess, linkss, dataSet, id, *node);
+			++id;
 		}
+		ss << "{\"nodes\":[" << nodess.str() << "],\"edges\":[" << linkss.str() << "]}";
 		serv->send(hdl, ss.str(), msg->get_opcode());
 		ss.clear();
+		nodess.clear();
+		linkss.clear();
 		break;
 	}
 }
@@ -103,4 +120,5 @@ int main(int argc, char* argv[]) {
 	serv->start_accept();
 	serv->run();
 	LOG(INFO) << "Server stopped";
+	return 0;
 }

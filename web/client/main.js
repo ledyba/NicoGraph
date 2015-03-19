@@ -31,6 +31,8 @@ $(function() {
                 ws.send(""+Math.round(at)+":"+cl.max);
                 ws.onmessage = function(event) {
                     console.log("received");
+                    var data = JSON.parse(event.data);
+                    visualize(data);
                 };
             }
             return self;
@@ -38,7 +40,15 @@ $(function() {
         cl = Client();
         cl.start();
     }
-
+    function visualize(payload){
+      // create a network
+      var container = document.getElementById('visualize');
+      var options = {
+        width:  '1200px',
+        height: '1200px'
+      };
+      var network = new vis.Network(container, payload, options);
+  }
 });
 $(function() {
     $("#slider").slider({
