@@ -10,87 +10,200 @@
 #include <glog/logging.h>
 #include <websocketpp/config/asio_no_tls.hpp>
 #include <websocketpp/server.hpp>
- #include <signal.h>
- #include "../nico/file.h"
- #include "../util/fmt.h"
- #include <cstdio>
+#include <signal.h>
+#include "../nico/file.h"
+#include "../util/fmt.h"
+#include <cstdio>
 
 typedef websocketpp::server<websocketpp::config::asio> server;
-
+using websocketpp::connection_hdl;
+using websocketpp::lib::placeholders::_1;
+using websocketpp::lib::placeholders::_2;
+using websocketpp::lib::bind;
+class Server;
+class Session;
 DEFINE_int32(port, 9002, "Port to listen on with HTTP protocol");
-std::shared_ptr<server> serv;
 std::shared_ptr<nicopp::DataSet> dataSet;
-void printOne(std::stringstream& nodess, std::stringstream& linkss, std::shared_ptr<nicopp::DataSet> const& dset, int const id, nicopp::TagNode const& node){
-	if(node.neighbors().size() <= 0){
-		return;
-	}
-	{
-		if(nodess.tellp() > 0){
-			nodess  << ",";
-		}
-	}
-	nodess << nicopp::sprintf("{\"id\":%d,\"label\":\"%s\",\"value\":%d}",id, dset->tag(node.payload().tagId), node.selfLoops());
-	for(auto const& link : node.neighbors()){
-		if (link.first < id){
-			continue;
-		}
-		if(linkss.tellp() > 0){
-			linkss << ",";
-		}
-		linkss << nicopp::sprintf("{\"from\":%d,\"to\":%d,\"value\":%d}", id, link.first, link.second);
-	}
-}
+std::shared_ptr<Server> serv;
 
-void pullHandler(websocketpp::connection_hdl hdl, server::message_ptr msg) {
-	int64_t from = 0;
-	int64_t to = 0;
-	sscanf(msg->get_payload().c_str(), "%ld:%ld", &from, &to);
-	LOG(INFO) << msg->get_payload() << " : " << from << " -> " << to;
-	using nicopp::TagGraph;
-	std::vector<TagGraph> vecs;
-	vecs.reserve(6);
-	vecs.emplace_back(dataSet->searchTag(from, to, 150000));
-	for(int i=0;i<5;++i){
-		int const from = vecs.back().nodes().size();
-		vecs.emplace_back(vecs.back().nextLevel());
-		int const to = vecs.back().nodes().size();
-		LOG(INFO) << "Stage: " << i+1 << " " << from << " -> " << to;
-		if((from-to) < 10){
-			vecs.pop_back();
-			break;
-		}
-	}
-	std::stringstream nodess;
-	std::stringstream linkss;
-	std::stringstream ss;
-	for(auto it = vecs.crbegin(); it != vecs.crend();++it) {
-		int id = 0;
-		for(auto node = it->nodes().begin(), end = it->nodes().end(); node != end; ++node){
-			printOne(nodess, linkss, dataSet, id, *node);
-			++id;
+class Session final
+{
+	std::vector<nicopp::TagGraph> graphs_;
+	int level_;
+	int group_;
+public:
+	Session()
+	:graphs_()
+	,level_(-1)
+	,group_(-1){
+
+	};
+	~Session() noexcept = default;
+	void zoomIn(int const id);
+	void zoomOut();
+	void out(server& serv, websocketpp::connection_hdl hdl, server::message_ptr msg) {
+		LOG(INFO) << "Out at " << group_ << ", level " << level_;
+		std::stringstream ss;
+		std::stringstream nodess;
+		std::stringstream linkss;
+		if(level_ >= 0){
+			std::vector<nicopp::TagNode> const& nodes = graphs_.back().nodes();
+			for(int i=0;i<nodes.size();++i){
+				printOne(nodess, linkss, dataSet, i, nodes[i]);
+			}
+		}else{
+			CHECK(graphs_.size()+level_-1 >= 0);
+			CHECK(graphs_.size()+level_ < graphs_.size());
+			auto const& nodes = graphs_.at(graphs_.size()+level_-1).nodes();
+			CHECK(group_ >= 0);
+			CHECK(group_ < graphs_.at(graphs_.size()+level_).nodes().size());
+			for(auto const child : graphs_.at(graphs_.size()+level_).nodes().at(group_).children()){
+				CHECK(child >= 0);
+				CHECK(child < nodes.size());
+				printOne(nodess, linkss, dataSet, child, nodes.at(child));
+			}
 		}
 		ss << "{\"nodes\":[" << nodess.str() << "],\"edges\":[" << linkss.str() << "]}";
-		serv->send(hdl, ss.str(), msg->get_opcode());
-		ss.clear();
-		nodess.clear();
-		linkss.clear();
-		break;
+		serv.send(hdl, ss.str(), msg->get_opcode());
 	}
-}
+	void seek(int64_t const from, int64_t const to){
+		LOG(INFO) << "Seek from " << from << " to " << to;
+		// clustering
+		using nicopp::TagGraph;
+		std::vector<TagGraph> vecs;
+		graphs_.clear();
+		graphs_.reserve(6);
+		graphs_.emplace_back(dataSet->searchTag(from, to, 150000));
+		for(int i=0;i<5;++i){
+			int const from = graphs_.back().nodes().size();
+			this->graphs_.emplace_back(graphs_.back().nextLevel());
+			int const to = this->graphs_.back().nodes().size();
+			LOG(INFO) << "Stage: " << i+1 << " " << from << " -> " << to;
+			if((from-to) < 10){
+				graphs_.pop_back();
+				break;
+			}
+		}
+		this->group_ = -1;
+		this->level_ = 0;
+	}
+	void onMessage(server& serv, websocketpp::connection_hdl hdl, server::message_ptr msg){
+		std::string const payload(msg->get_payload());
+		if(std::strncmp(payload.c_str(), "RANGE", 5) == 0){
+			serv.send(hdl, nicopp::sprintf("%ld:%ld", dataSet->min(), dataSet->max()), msg->get_opcode());
+		}else if(std::strncmp(payload.c_str(), "SEEK ", 5) == 0){
+			int64_t from = 0;
+			int64_t to = 0;
+			sscanf(payload.c_str(), "SEEK %ld:%ld", &from, &to);
+			this->seek(from, to);
+			this->out(serv, hdl, msg);
+		}else if(std::strncmp(payload.c_str(), "ZOOMIN ", 7) == 0){
+			if( -(level_-1) < graphs_.size() ){
+				--this->level_;
+				int64_t to = 0;
+				sscanf(payload.c_str(), "ZOOMIN %ld", &to);
+				this->group_ = to;
+				this->out(serv, hdl, msg);
+			}else{
+				serv.send(hdl, "{}", msg->get_opcode());
+			}
+		}else if(std::strncmp(payload.c_str(), "ZOOMOUT", 7) == 0){
+			if(level_ < 0){
+				int64_t to = this->graphs_.at(graphs_.size()+level_).nodes().at(this->group_).parent();
+				this->group_ = to;
+				++this->level_;
+				this->out(serv, hdl, msg);
+			}else{
+				serv.send(hdl, "{}", msg->get_opcode());
+			}
+		}else{
+			LOG(ERROR) << "Handler not found: " << payload;
+		}
+	}
+private:
+	void printOne(std::stringstream& nodess, std::stringstream& linkss, std::shared_ptr<nicopp::DataSet> const& dset, int const id, nicopp::TagNode const& node){
+		if(node.neighbors().size() <= 0){
+			return;
+		}
+		{
+			if(nodess.tellp() > 0){
+				nodess  << ",";
+			}
+		}
+		nodess << nicopp::sprintf("{\"id\":%d,\"label\":\"%s\",\"value\":%d}",id, dset->tag(node.payload().tagId), node.selfLoops());
+		for(auto const& link : node.neighbors()){
+			if (link.first < id){
+				continue;
+			}
+			if(linkss.tellp() > 0){
+				linkss << ",";
+			}
+			linkss << nicopp::sprintf("{\"from\":%d,\"to\":%d,\"value\":%d}", id, link.first, link.second);
+		}
+	}
+};
 
-void firstHandler(websocketpp::connection_hdl hdl, server::message_ptr msg) {
-	msg->set_compressed(true);
-	if(msg->get_payload() == "TELL RANGE"){
-		server::connection_ptr con = serv->get_con_from_hdl(hdl);
-		con->set_message_handler(pullHandler);
-		serv->send(hdl, nicopp::sprintf("%ld:%ld", dataSet->min(), dataSet->max()), msg->get_opcode());
+struct connection_data {
+	int sessionid;
+	std::string name;
+};
+
+class Server {
+
+	typedef std::map<connection_hdl,std::shared_ptr<Session>,std::owner_less<connection_hdl>> SessionMap;
+
+	server spr_;
+	SessionMap sessionMap_;
+public:
+	Server() {
+		spr_.init_asio();
+		
+		spr_.set_open_handler(bind(&Server::onOpen,this,::_1));
+		spr_.set_close_handler(bind(&Server::onClose,this,::_1));
+		spr_.set_message_handler(bind(&Server::onMessage,this,::_1,::_2));
 	}
-}
+	
+	void onOpen(connection_hdl hdl) {
+		std::shared_ptr<Session> sess(new Session);
+		sessionMap_[hdl] = sess;
+	}
+	
+	void onClose(connection_hdl hdl) {
+		std::shared_ptr<Session> sess ( getDataFromHandle(hdl) );
+		sessionMap_.erase(hdl);
+	}
+	
+	void onMessage(connection_hdl hdl, server::message_ptr msg) {
+		std::shared_ptr<Session> sess ( getDataFromHandle(hdl) );
+		sess->onMessage(spr_, hdl, msg);
+	}
+	
+	std::shared_ptr<Session> getDataFromHandle(connection_hdl hdl) {
+		auto it = sessionMap_.find(hdl);
+		
+		if (it == sessionMap_.end()) {
+			// this connection is not in the list. This really shouldn't happen
+			// and probably means something else is wrong.
+			throw std::invalid_argument("No data avaliable for session");
+		}
+		
+		return it->second;
+	}
+	
+	void run(uint16_t port) {
+		spr_.listen(port);
+		spr_.start_accept();
+		spr_.run();
+	}
+	void stop(){
+		websocketpp::lib::error_code ec;
+		spr_.stop_listening(ec);
+		spr_.stop();
+	}
+};
 
 void onSigint(int signo){
 	if (serv) {
-		websocketpp::lib::error_code ec;
-		serv->stop_listening(ec);
 		serv->stop();
 	}
 }
@@ -109,13 +222,9 @@ int main(int argc, char* argv[]) {
 	dataSet = std::shared_ptr<nicopp::DataSet>(new nicopp::DataSet(std::move(nicopp::DataSet::Load("compiled/tagf","compiled/vf","compiled/linkf"))));
 	LOG(INFO) << "Done." << std::flush;
 
-	serv = std::shared_ptr<server>(new server);
-	serv->set_message_handler(firstHandler);
-	serv->init_asio();
-	serv->listen(FLAGS_port);
+	serv = std::shared_ptr<Server>(new Server);
 	LOG(INFO) << "Server Started: http://localhost:" << FLAGS_port << "/";
-	serv->start_accept();
-	serv->run();
+	serv->run(FLAGS_port);
 	LOG(INFO) << "Server stopped";
 	return 0;
 }

@@ -11,10 +11,10 @@ $(function() {
             } else if ("MozWebSocket" in window) {
                 ws = new MozWebSocket(url);
             }
-            self.start = function start() {
+            self.start = function() {
                 ws.onopen = function() {
                     console.log("Connection Established.");
-                    ws.send("TELL RANGE");
+                    ws.send("RANGE");
                     ws.onmessage = function(event) {
                         var range = event.data.split(":");
                         self.min = parseInt(range[0], 10);
@@ -26,14 +26,41 @@ $(function() {
                 };
             }
 
-            self.receive = function receive(at) {
-                ws.send(""+Math.round(at)+":"+cl.max);
+            self.seek = function(at) {
+                ws.send("SEEK "+cl.min+":"+Math.round(at));
                 ws.onmessage = function(event) {
                     console.log("received");
                     var data = JSON.parse(event.data);
                     visualize(data);
                 };
-            }
+            };
+            var zoom = 0;
+            self.zoomIn = function(to){
+                ws.send("ZOOMIN "+to);
+                zoom++;
+                ws.onmessage = function(event) {
+                    var payload = JSON.parse(event.data);
+                    if(payload.hasOwnProperty("edges") && payload.hasOwnProperty("nodes")){
+                        $("#zout").show();
+                        visualize(payload);
+                    }
+                };
+            };
+            self.zoomOut = function(){
+                ws.send("ZOOMOUT");
+                zoom--;
+                ws.onmessage = function(event) {
+                    var payload = JSON.parse(event.data);
+                    if(payload.hasOwnProperty("edges") && payload.hasOwnProperty("nodes")){
+                        visualize(payload);
+                    }else{
+                        $("#zout").hide();
+                    }
+                    if(zoom <= 0){
+                        $("#zout").hide();
+                    }
+                };
+            };
             return self;
         };
         cl = Client();
@@ -91,39 +118,62 @@ var selected = {
     border: '#2B7CE9',
 };
 function onClick(selectedItems) {
-    var fromId = selectedItems.nodes[0];
-    var connected = network.getConnectedNodes(fromId);
-    var allNodes = nodes.get({returnType:"Object"});
-    var changed = [];
-    for(nodeId in allNodes){
-        if(allNodes.hasOwnProperty(nodeId)){
-            var index = connected.indexOf(parseInt(nodeId));
-            if(nodeId !== fromId && index < 0){
-                if(allNodes[nodeId].color !== nonselected){
-                    allNodes[nodeId].color = nonselected;
-                    changed.push(allNodes[nodeId]);
-                }
-            }else{
-                if(allNodes[nodeId].color !== selected){
-                    allNodes[nodeId].color = selected;
-                    changed.push(allNodes[nodeId]);
+    if(selectedItems.nodes.length == 0) {
+        var allNodes = nodes.get({returnType:"Object"});
+        var changed = [];
+        for(nodeId in allNodes){
+            if(allNodes.hasOwnProperty(nodeId)){
+                allNodes[nodeId].color = selected;
+                changed.push(allNodes[nodeId]);
+            }
+        }
+        nodes.update(changed);
+    } else {
+        var fromId = selectedItems.nodes[0];
+        var connected = network.getConnectedNodes(fromId);
+        var allNodes = nodes.get({returnType:"Object"});
+        var changed = [];
+        for(nodeId in allNodes){
+            if(allNodes.hasOwnProperty(nodeId)){
+                var index = connected.indexOf(parseInt(nodeId));
+                if(nodeId !== fromId && index < 0){
+                    if(allNodes[nodeId].color !== nonselected){
+                        allNodes[nodeId].color = nonselected;
+                        changed.push(allNodes[nodeId]);
+                    }
+                }else{
+                    if(allNodes[nodeId].color !== selected){
+                        allNodes[nodeId].color = selected;
+                        changed.push(allNodes[nodeId]);
+                    }
                 }
             }
         }
+        nodes.update(changed);
     }
-    nodes.update(changed);
 }
 function onDoubleClick(selectedItems) {
+    if(selectedItems.nodes.length > 0){
+        var toId = selectedItems.nodes[0];
+        cl.zoomIn(toId);
+    }
 }
 });
 $(function() {
+    var dateElem = $("#date");
+    function dateOf(event,ui) {
+        return ((cl.max-cl.min) * ui.value /1000)+cl.min;
+    }
+    $("#zout").hide().click(function(){
+        cl.zoomOut();
+    });
     $("#slider").slider({
         change: function(event, ui) {
-            console.log(ui.value);
-            cl.receive(((cl.max-cl.min) * ui.value /1000)+cl.min);
+            cl.seek(dateOf(event,ui));
         },
         slide: function(event, ui) {
-            console.log(ui.value);
+            var time = dateOf(event, ui);
+            dateElem.text(new Date(time*1000).toLocaleString());
         },
         min: 0,
         max: 1000

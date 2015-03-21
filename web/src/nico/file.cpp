@@ -57,10 +57,11 @@ DataSet::DataSet(std::vector<char>&& tagBuff, std::vector<char>&& videoIdBuff, s
 ,videoIds_(parse(videoIdBuff_.data()))
 ,videos_(std::move(videos))
 {
-	LOG(INFO) << "DataSet Loaded." << std::endl
-	          << tags_.size() << " tags" << std::endl
-	          << videoIds_.size() << " videos" << std::endl
-	          << videos_.size() << " entries";
+	LOG(INFO)
+		<< "DataSet Loaded: "
+		<< tags_.size() << " tags "
+		<< videoIds_.size() << " videos "
+		<< videos_.size() << " entries";
 }
 
 TagGraph DataSet::searchTag(uint64_t const from, uint64_t const to, int const limit)
@@ -74,9 +75,11 @@ TagGraph DataSet::searchTag(uint64_t const from, uint64_t const to, int const li
 		std::vector<int> degrees;
 		std::vector<Tag> tags;
 		auto beg = std::lower_bound(this->videos_.begin(), this->videos_.end(), from, VideoLess());
-		auto end = std::lower_bound(this->videos_.begin(), this->videos_.end(), to, VideoLess());
+		auto end = std::upper_bound(this->videos_.begin(), this->videos_.end(), to, VideoLess());
+		std::vector<Video>::const_reverse_iterator revbeg(beg);
+		std::vector<Video>::const_reverse_iterator revend(end);
 		int cnt = 0;
-		for (auto it = beg; it < end;++it){
+		for (auto it = revend; it != revbeg;++it){
 			if(limit >= 0 && cnt >= limit){
 				break;
 			}
