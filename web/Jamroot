@@ -7,7 +7,6 @@ lib glog : : <name>glog ;
 lib gflags : : <name>gflags ;
 lib profiler : : <name>profiler ;
 lib boost_system : : <name>boost_system ;
-
 project
     : build-dir bin
     : requirements
@@ -20,26 +19,14 @@ project
         <toolset>darwin:<cxxflags>-std=c++11
         <toolset>clang:<cxxflags>-std=c++11
     ;
-lib nico
+exe nicopp
     :
+    src/ep/nicopp.cpp
     src/nico/file.cpp
     pthread
     glog
     gflags
     boost_system
-    :
-    <include>external/
-    <link>shared
-    ;
-
-exe nicopp
-    :
-    src/ep/nicopp.cpp
-    pthread
-    glog
-    gflags
-    boost_system
-    nico
     :
     <include>external/
     <link>shared
