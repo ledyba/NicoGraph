@@ -24,9 +24,6 @@ void printOne(std::stringstream& nodess, std::stringstream& linkss, std::shared_
 	if(node.neighbors().size() <= 0){
 		return;
 	}
-	if(node.selfLoops() < 1000){
-		return;
-	}
 	{
 		if(nodess.tellp() > 0){
 			nodess  << ",";
@@ -34,7 +31,7 @@ void printOne(std::stringstream& nodess, std::stringstream& linkss, std::shared_
 	}
 	nodess << nicopp::sprintf("{\"id\":%d,\"label\":\"%s\",\"value\":%d}",id, dset->tag(node.payload().tagId), node.selfLoops());
 	for(auto const& link : node.neighbors()){
-		if(link.second < 100){
+		if (link.first < id){
 			continue;
 		}
 		if(linkss.tellp() > 0){

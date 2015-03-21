@@ -119,7 +119,7 @@ TagGraph DataSet::searchTag(uint64_t const from, uint64_t const to, int const li
 					++degrees[fidx];
 					++degrees[tidx];
 				}
-				tags[fidx].viewCount += video.viewCount;
+				tags[fidx].viewCount += 1;
 			}
 			totalLink += tagCount * (tagCount - 1);
 		}
