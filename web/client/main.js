@@ -27,7 +27,8 @@ $(function() {
             }
 
             self.seek = function(at) {
-                ws.send("SEEK "+cl.min+":"+Math.round(at));
+                var until = Math.round(at);
+                ws.send("SEEK "+(until-2*14*24*3600)+":"+until);
                 ws.onmessage = function(event) {
                     console.log("received");
                     var data = JSON.parse(event.data);
@@ -37,26 +38,26 @@ $(function() {
             var zoom = 0;
             self.zoomIn = function(to){
                 ws.send("ZOOMIN "+to);
-                zoom++;
                 ws.onmessage = function(event) {
                     var payload = JSON.parse(event.data);
                     if(payload.hasOwnProperty("edges") && payload.hasOwnProperty("nodes")){
                         $("#zout").show();
+                        zoom++;
                         visualize(payload);
                     }
                 };
             };
             self.zoomOut = function(){
                 ws.send("ZOOMOUT");
-                zoom--;
                 ws.onmessage = function(event) {
                     var payload = JSON.parse(event.data);
                     if(payload.hasOwnProperty("edges") && payload.hasOwnProperty("nodes")){
+                        zoom--;
+                        if(zoom <= 0){
+                            $("#zout").hide();
+                        }
                         visualize(payload);
                     }else{
-                        $("#zout").hide();
-                    }
-                    if(zoom <= 0){
                         $("#zout").hide();
                     }
                 };
@@ -69,15 +70,8 @@ $(function() {
     var nodes = new vis.DataSet();
     var edges = new vis.DataSet();
     var datas = {nodes: nodes, edges: edges};
-    var network;
-    function visualize(payload){
-      // create a network
-      nodes.clear();
-      edges.clear();
-      nodes.add(payload.nodes);
-      edges.add(payload.edges);
-      var container = document.getElementById('visualize');
-      var options = {
+    var container = document.getElementById('visualize');
+    var options = {
         nodes: {
             shape: 'dot',
             radiusMin: 10,
@@ -93,7 +87,7 @@ $(function() {
                 color: 'rgba(150,150,150,0.3)',
                 highlight: 'rgba(43,124,233,0.5)'
             }
-            },
+        },
         tooltip: {
             delay: 200,
             fontSize: 12,
@@ -106,10 +100,16 @@ $(function() {
         physics: {barnesHut: {gravitationalConstant: -80000, springConstant: 0.001, springLength: 200}},
         hideEdgesOnDrag: true,
         smoothCurves: false
-      };
-      network = new vis.Network(container, datas, options);
-      network.on("click",onClick);
-      network.on("doubleClick",onDoubleClick);
+    };
+    var network = new vis.Network(container, datas, options);
+    network.on("click",onClick);
+    network.on("doubleClick",onDoubleClick);
+    function visualize(payload){
+      // create a network
+      nodes.clear();
+      edges.clear();
+      nodes.update(payload.nodes);
+      edges.update(payload.edges);
   }
 
 var nonselected = 'rgba(150,150,150,0.3)';

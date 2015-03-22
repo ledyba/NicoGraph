@@ -8,6 +8,12 @@ body {
 	height: 100%;
 	margin: 0px;
 }
+.parent {
+    pointer-events:none;        
+}
+.child {
+    pointer-events:all;
+}
 
 #slider {
 }
