@@ -52,14 +52,8 @@ public:
 				printOne(nodess, linkss, dataSet, i, nodes[i]);
 			}
 		}else{
-			CHECK(graphs_.size()+level_-1 >= 0);
-			CHECK(graphs_.size()+level_ < graphs_.size());
 			auto const& nodes = graphs_.at(graphs_.size()+level_-1).nodes();
-			CHECK(group_ >= 0);
-			CHECK(group_ < graphs_.at(graphs_.size()+level_).nodes().size());
 			for(auto const child : graphs_.at(graphs_.size()+level_).nodes().at(group_).children()){
-				CHECK(child >= 0);
-				CHECK(child < nodes.size());
 				printOne(nodess, linkss, dataSet, child, nodes.at(child));
 			}
 		}
@@ -98,7 +92,7 @@ public:
 			this->seek(from, to);
 			this->out(serv, hdl, msg);
 		}else if(std::strncmp(payload.c_str(), "ZOOMIN ", 7) == 0){
-			if( -(level_-1) < graphs_.size() ){
+			if( (unsigned int)(-(level_-1)) < graphs_.size() ){
 				--this->level_;
 				int64_t to = 0;
 				sscanf(payload.c_str(), "ZOOMIN %ld", &to);
