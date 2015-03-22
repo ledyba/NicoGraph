@@ -48,7 +48,7 @@ public:
 		std::stringstream linkss;
 		if(level_ >= 0){
 			std::vector<nicopp::TagNode> const& nodes = graphs_.back().nodes();
-			for(int i=0;i<nodes.size();++i){
+			for(unsigned int i=0;i<nodes.size();++i){
 				printOne(nodess, linkss, dataSet, i, nodes[i]);
 			}
 		}else{
