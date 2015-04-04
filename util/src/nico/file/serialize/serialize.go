@@ -3,7 +3,10 @@ package file
 import (
 	"bufio"
 	"encoding/binary"
+	"io"
+	"log"
 	"nico/dist"
+	"os"
 	"sort"
 )
 
@@ -20,13 +23,37 @@ type DB struct {
 	Videos   []Video
 }
 
-func NewDB() *DB {
+func NewDB(tags string) *DB {
 	db := &DB{}
-	db.Tags = make([]string, 0)
 	db.Videos = make([]Video, 0)
-	db.tagDict = make(map[string]uint32, 0)
+	db.Tags, db.tagDict = enumTags(tags)
 	return db
 }
+
+func enumTags(fname string) ([]string, map[string]uint32) {
+	tags := make(map[string]uint32, 0)
+	tagl := make([]string, 0)
+	f, err := os.Open(fname)
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+	bf := bufio.NewReader(f)
+	var bline []byte
+	cnt := uint32(0)
+	for bline, _, err = bf.ReadLine(); err == nil; bline, _, err = bf.ReadLine() {
+		t := string(bline)
+		tags[t] = cnt
+		tagl = append(tagl, t)
+		cnt++
+	}
+	if err != io.EOF {
+		panic(err)
+	}
+	log.Printf("Loaded: %d tags", cnt)
+	return tagl, tags
+}
+
 func (db *DB) Serialize(tagf *bufio.Writer, vf *bufio.Writer, linkf *bufio.Writer) {
 	sort.Sort(VideoList(db.Videos))
 	for _, tag := range db.Tags {
@@ -48,7 +75,6 @@ func (db *DB) Serialize(tagf *bufio.Writer, vf *bufio.Writer, linkf *bufio.Write
 			binary.Write(linkf, binary.LittleEndian, tag)
 		}
 	}
-
 }
 
 type VideoList []Video
@@ -64,25 +90,27 @@ func (vs VideoList) Swap(i, j int) {
 func (vs VideoList) Less(i, j int) bool {
 	return vs[i].UploadedAt < vs[j].UploadedAt
 }
-func (db *DB) searchTag(tag string) uint32 {
+func (db *DB) searchTag(tag string) (uint32, bool) {
 	n, ok := db.tagDict[tag]
-	if ok {
-		return n
-	}
-	n = uint32(len(db.Tags))
-	db.tagDict[tag] = n
-	db.Tags = append(db.Tags, tag)
-	return n
+	return n, ok
 }
 
 func (db *DB) AddVideo(info *nico.MetaInfo) {
 	var tags [10]int32
 	for i := range tags {
+		tags[i] = -1
+	}
+	fill := 0
+	for i := range tags {
 		if i < len(info.Tags) {
-			tags[i] = int32(db.searchTag(info.Tags[i].Tag))
-		} else {
-			tags[i] = -1
+			if t, ok := db.searchTag(info.Tags[i].Tag); ok {
+				tags[fill] = int32(t)
+				fill++
+			}
 		}
+	}
+	if fill < 2 {
+		return
 	}
 	vid := len(db.VideoIds)
 	db.VideoIds = append(db.VideoIds, info.VideoId)
