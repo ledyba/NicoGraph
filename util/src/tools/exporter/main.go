@@ -12,7 +12,7 @@ import (
 
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
-	db := file.NewDB()
+	db := file.NewDB("tags.final")
 	total := 0
 	for i := 0; i <= 1925; i++ {
 		metas := make([]nico.MetaInfo, 0)

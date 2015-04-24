@@ -1,0 +1,3 @@
+[submodule "web/external/louvain"]
+	path = web/external/louvain
+	url = git@github.com:ledyba/cpp-louvain-fast.git
