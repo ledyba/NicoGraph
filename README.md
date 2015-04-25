@@ -5,7 +5,7 @@ NicoGraphは、ニコニコ動画のタグを階層的にまとめあげた上�
 
 - [Demo](http://nicograph.ledyba.org/)
 
-[![ScreenShot](https://raw.github.com/ledyba/NicoGraph/master/screenshot.jpg)](http://nicograph.ledyba.org)
+[![ScreenShot](https://raw.githubusercontent.com/ledyba/NicoGraph/master/screenshot.jpg)](http://nicograph.ledyba.org)
 
 # ドキュメント
 
