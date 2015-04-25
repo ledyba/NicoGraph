@@ -1,4 +1,5 @@
 var cl;
+var initFunc;
 $(function() {
     var url = "ws://ledyba.org:9002/";
     window.onload = function main() {
@@ -22,7 +23,7 @@ $(function() {
                         console.log("RANGE: " + self.min + " -> " + self.max);
                         console.log( $( "#selector" ).slider());
                         ws.onmessage = null;
-                        self.seek(self.max);
+                        window.setTimeout(initFunc);
                     }
                 };
             }
@@ -114,7 +115,6 @@ $(function() {
       nodes.update(payload.nodes);
       edges.update(payload.edges);
   }
-
 var nonselected = 'rgba(150,150,150,0.3)';
 var selected = {
     background: '#97C2FC',
@@ -170,15 +170,25 @@ $(function() {
     $("#zout").hide().click(function(){
         cl.zoomOut();
     });
+    var onChange = function(event, ui) {
+        cl.seek(dateOf(event,ui));
+    };
+    var onSlide = function(event, ui) {
+        var time = dateOf(event, ui);
+        dateElem.text(new Date(time*1000).toLocaleString());
+    };
     $("#slider").slider({
-        change: function(event, ui) {
-            cl.seek(dateOf(event,ui));
-        },
-        slide: function(event, ui) {
-            var time = dateOf(event, ui);
-            dateElem.text(new Date(time*1000).toLocaleString());
-        },
+        change: onChange,
+        slide: onSlide,
         min: 0,
-        max: 1000
+        max: 1000,
+        value: 999
+    });
+    initFunc = (function(){
+        var s = $( "#selector" );
+        s.slider('value',999);
+        s.slider("refresh");
+        onChange.call(s,null,{ handle: $('.ui-slider-handle', s), value: 999 });
+        onSlide.call(s,null,{ handle: $('.ui-slider-handle', s), value: 999 });
     });
 });
