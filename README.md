@@ -10,3 +10,8 @@ NicoGraphは、ニコニコ動画のタグを階層的にまとめあげた上�
 # ドキュメント
 
 今書いている
+
+# Louvain Method
+クラスタリングに用いているアルゴリズムの実装はこちらにあります。
+
+[ledyba/cpp-louvain-fast](https://github.com/ledyba/cpp-louvain-fast)
