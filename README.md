@@ -9,4 +9,10 @@ NicoGraphは、ニコニコ動画のタグを階層的にまとめあげた上�
 
 # ドキュメント
 
-今書いている
+ - ニコニコ動画のタグネットワークをリアルタイムに可視化する
+   - http://ledyba.org/2015/04/25230134.php
+
+# Louvain Method
+クラスタリングに用いているアルゴリズムの実装はこちらにあります。
+
+[ledyba/cpp-louvain-fast](https://github.com/ledyba/cpp-louvain-fast)
