@@ -1,7 +1,6 @@
 var cl;
 $(function() {
     var url = "ws://ledyba.org:9002/";
-    //var url = "ws://157.7.242.49:9002/";
     window.onload = function main() {
         function Client() {
             var self={};
@@ -23,6 +22,7 @@ $(function() {
                         console.log("RANGE: " + self.min + " -> " + self.max);
                         console.log( $( "#selector" ).slider());
                         ws.onmessage = null;
+                        self.seek(self.max);
                     }
                 };
             }
