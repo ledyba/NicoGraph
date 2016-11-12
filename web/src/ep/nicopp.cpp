@@ -6,17 +6,20 @@
 #include <chrono>
 #include <signal.h>
 #include <unistd.h>
-#include <gflags/gflags.h>
-#include <glog/logging.h>
-#include <websocketpp/config/asio.hpp>
-#include <websocketpp/server.hpp>
 #include <signal.h>
-#include "../nico/file.h"
-#include "../util/fmt.h"
 #include <cstdio>
 
+#include <gflags/gflags.h>
+#include <glog/logging.h>
+
+#include <websocketpp/config/asio.hpp>
+#include <websocketpp/server.hpp>
+
+#include "../nico/file.h"
+#include "../util/fmt.h"
+
 typedef websocketpp::server<websocketpp::config::asio_tls> server;
-typedef websocketpp::lib::shared_ptr<websocketpp::transport::asio::ssl::context> context_ptr;
+typedef websocketpp::lib::shared_ptr<boost::asio::ssl::context> context_ptr;
 
 using websocketpp::connection_hdl;
 using websocketpp::lib::placeholders::_1;
