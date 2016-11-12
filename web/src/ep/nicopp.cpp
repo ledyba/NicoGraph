@@ -263,6 +263,7 @@ int main(int argc, char* argv[]) {
   using websocketpp::lib::bind;
   google::InitGoogleLogging(argv[0]);
   google::InstallFailureSignalHandler();
+  gflags::ParseCommandLineFlags(&argc, &argv, true);
   if (signal(SIGINT, onSigint) == SIG_ERR) {
     LOG(FATAL) << "can't catch SIGINT";
   }
