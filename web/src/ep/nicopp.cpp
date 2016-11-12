@@ -32,7 +32,7 @@ std::string get_password() {
     return "";
 }
 
-context_ptr on_tls_init(tls_mode mode, websocketpp::connection_hdl hdl) {
+context_ptr on_tls_init(websocketpp::connection_hdl hdl) {
     namespace asio = websocketpp::lib::asio;
 
     std::cout << "on_tls_init called with hdl: " << hdl.lock().get() << std::endl;
