@@ -44,6 +44,8 @@ context_ptr on_tls_init(websocketpp::connection_hdl hdl) {
     namespace asio = websocketpp::lib::asio;
 
     LOG(INFO) << "on_tls_init called with hdl: " << hdl.lock().get();
+    LOG(INFO) << "Cert: " << FLAGS_cert;
+    LOG(INFO) << "PrivKey: " << FLAGS_privkey;
 
     context_ptr ctx = websocketpp::lib::make_shared<asio::ssl::context>(asio::ssl::context::sslv23);
 
