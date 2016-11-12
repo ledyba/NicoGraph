@@ -7,6 +7,8 @@ lib glog : : <name>glog ;
 lib gflags : : <name>gflags ;
 lib profiler : : <name>profiler ;
 lib boost_system : : <name>boost_system ;
+lib ssl : : <name>ssl ;
+lib crypto : : <name>crypto ;
 project
     : build-dir bin
     : requirements
@@ -15,6 +17,8 @@ project
         <library>gflags
         <library>boost_system
         <library>profiler
+        <library>ssl
+        <library>crypto
         <toolset>gcc:<cxxflags>-std=gnu++11
         <toolset>darwin:<cxxflags>-std=c++11
         <toolset>clang:<cxxflags>-std=c++11
@@ -27,6 +31,8 @@ exe nicopp
     glog
     gflags
     boost_system
+    ssl
+    crypto
     :
     <include>external/
     <link>shared

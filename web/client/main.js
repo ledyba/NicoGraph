@@ -1,7 +1,7 @@
 var cl;
 var initFunc;
 $(function() {
-    var url = "ws://ledyba.org:9002/";
+    var url = "wss://ledyba.org:9002/";
     window.onload = function main() {
         function Client() {
             var self={};
