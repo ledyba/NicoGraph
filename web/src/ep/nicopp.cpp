@@ -204,7 +204,7 @@ public:
     spr_.set_open_handler(bind(&Server::onOpen,this,::_1));
     spr_.set_close_handler(bind(&Server::onClose,this,::_1));
     spr_.set_message_handler(bind(&Server::onMessage,this,::_1,::_2));
-		spr_.set_tls_init_handler(on_tls_init);
+    spr_.set_tls_init_handler(bind(&on_tls_init,::_1));
   }
 
   void onOpen(connection_hdl hdl) {
