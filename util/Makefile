@@ -9,8 +9,8 @@ fmt:
 deploy: fmt
 	GOOS=linux GOARCH=amd64 GOPATH=$(shell pwd):${GOPATH} GOBIN=$(shell pwd)/bin \
 		go install -v -gcflags -N ./...
-	scp bin/exporter ledyba.org:/tmp
-	scp bin/exportTags ledyba.org:/tmp
+	scp bin/exporter 7io.org:/tmp
+	scp bin/exportTags 7io.org:/tmp
 
 prof:
 	GOPATH=$(shell pwd):${GOPATH} GOBIN=$(shell pwd)/bin go tool pprof bin/fileLoad prof
