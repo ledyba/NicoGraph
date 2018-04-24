@@ -3,9 +3,7 @@ NicoGraphは、ニコニコ動画のタグを階層的にまとめあげた上�
 
 超高速なグラフクラスタリングアルゴリズムを用いており、その高速性を活かして集計期間をダイナミックに変更してその場でクラスタリング・可視化をしてしまいます。
 
-- [Demo](https://app.7io.org/NicoGraph/)
-
-[![ScreenShot](https://raw.githubusercontent.com/ledyba/NicoGraph/master/screenshot.jpg)](https://app.7io.org/NicoGraph/)
+![ScreenShot](https://raw.githubusercontent.com/ledyba/NicoGraph/master/screenshot.jpg)
 
 # ドキュメント
 
